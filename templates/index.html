@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Health Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>System Health Dashboard</h1>
+    <table id="health-table">
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Item</th>
+                <th>Status</th>
+                <th>Last Updated</th>
+                <th>Message</th>
+                <th>Link</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data will be populated by JavaScript -->
+        </tbody>
+    </table>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
