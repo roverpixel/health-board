@@ -71,6 +71,10 @@ as well as updates to item statuses.
 
 The base URL for the API is `http://localhost:5000/api`.
 
+**Important Naming Conventions:**
+-   Category names and Item names **must not** contain the forward slash character (`/`).
+-   Spaces in names are generally acceptable (e.g., "Operational Systems", "Main Build") as they will be URL-encoded by clients like `curl`. However, for maximum simplicity and to avoid any potential issues with URL encoding across different tools or libraries, using underscores (`_`) or hyphens (`-`) instead of spaces is a good practice (e.g., `Operational_Systems`, `Main_Build`).
+
 ### Health Data
 
 #### Get All Health Data
@@ -82,7 +86,7 @@ The base URL for the API is `http://localhost:5000/api`.
       "Builds": {
         "Main Build": {"status": "passing", "last_updated": "...", "message": "...", "url": "..."}
       },
-      "Host Up/Down": {
+      "Hosts Online": {
         "mars": {"status": "down", "last_updated": "...", "message": "...", "url": "..."}
       }
     }
@@ -94,13 +98,14 @@ The base URL for the API is `http://localhost:5000/api`.
 -   **URL:** `/categories`
 -   **Method:** `POST`
 -   **Headers:** `Content-Type: application/json`
--   **Body:** `{"category_name": "New Category Name"}`
+-   **Body:** `{"category_name": "New Category Name"}` (See Naming Conventions, e.g., "New_Category" or "New Category")
 -   **Success Response (201 Created):** `{"New Category Name": {}}`
 -   **Error Response (400 Bad Request):** If category exists or invalid payload.
 
 #### Delete Category
 -   **URL:** `/categories/<category_name>`
-    -   Example: `/categories/Builds` (Note: URL encode spaces or special characters, e.g., `Host%20Up%2FDown`)
+    -   Example: `/categories/Builds`, `/categories/Hosts%20Online`
+    -   (Note: URL encode spaces if present, e.g., `Operational%20Systems`)
 -   **Method:** `DELETE`
 -   **Success Response (200 OK):** `{"message": "Category '<category_name>' deleted successfully"}`
 -   **Error Response (404 Not Found):** If category does not exist.

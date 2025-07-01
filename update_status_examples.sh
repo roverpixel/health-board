@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Script to update the status of some items on the dashboard.
+# Category and Item names should not contain '/'
 
 API_BASE_URL="http://localhost:5000/api"
 
@@ -13,19 +14,17 @@ curl -X PUT -H "Content-Type: application/json" \
   "$API_BASE_URL/categories/Builds/items/Main%20Build"
 echo ""
 
-# Update "mars" to "down", "jupiter" to "running"
-# These item names ("mars", "jupiter") do not have spaces, so no URL encoding needed for them.
-# The category "Host Up/Down" is correctly encoded in its path segment.
+# Update "mars" to "down", "jupiter" to "running" in "Hosts Online" category
 echo "Updating Host: mars..."
 curl -X PUT -H "Content-Type: application/json" \
   -d '{"status": "down", "message": "Host mars is unresponsive, ping failed.", "url": "http://monitoring.example.com/hosts/mars"}' \
-  "$API_BASE_URL/categories/Host%20Up%2FDown/items/mars"
+  "$API_BASE_URL/categories/Hosts%20Online/items/mars" # Changed category name & URL encoded
 echo ""
 
 echo "Updating Host: jupiter..."
 curl -X PUT -H "Content-Type: application/json" \
   -d '{"status": "running", "message": "All systems normal.", "url": "http://monitoring.example.com/hosts/jupiter"}' \
-  "$API_BASE_URL/categories/Host%20Up%2FDown/items/jupiter"
+  "$API_BASE_URL/categories/Hosts%20Online/items/jupiter" # Changed category name & URL encoded
 echo ""
 
 
