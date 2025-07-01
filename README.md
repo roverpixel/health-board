@@ -1,4 +1,6 @@
-# System Health Dashboard (Hierarchical)
+[![Python application](https://github.com/roverpixel/health-board/actions/workflows/python-app.yml/badge.svg)](https://github.com/roverpixel/health-board/actions/workflows/python-app.yml)
+
+# System Health Dashboard
 
 This is a web application to display the health status of various systems, organized into categories and items.
 It provides a dashboard view in a browser, showing one row per item with its category, status icons,
