@@ -1,21 +1,19 @@
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, request, render_template
 import datetime
 
 app = Flask(__name__)
 
-# In-memory store for health statuses
-# Each system has a dictionary with:
-# - status: current health status (string, e.g., "passing", "failing")
-# - last_updated: ISO 8601 timestamp of the last update (string)
-# - message: optional descriptive message (string)
-# - url: optional link for more details (string)
-health_statuses = {
-    "builds": {"status": "unknown", "last_updated": None, "message": "", "url": ""},
-    "tests": {"status": "unknown", "last_updated": None, "message": "", "url": ""},
-    "host_activity": {"status": "unknown", "last_updated": None, "message": "", "url": ""},
-    "host_up_down": {"status": "unknown", "last_updated": None, "message": "", "url": ""},
-    "operational_system": {"status": "unknown", "last_updated": None, "message": "", "url": ""},
-}
+# In-memory data store
+# health_data = {
+#     "CategoryName": {
+#         "ItemName": {"status": "unknown", "last_updated": None, "message": "", "url": ""}
+#     }
+# }
+health_data = {}
+
+def get_default_item_status():
+    """Returns the default status dictionary for a new item."""
+    return {"status": "unknown", "last_updated": None, "message": "", "url": ""}
 
 @app.route('/')
 def index():
@@ -23,39 +21,97 @@ def index():
     return render_template('index.html')
 
 @app.route('/api/health', methods=['GET'])
-def get_health_statuses_api():
-    """API endpoint to get all health statuses."""
-    return jsonify(health_statuses)
+def get_health_data_api():
+    """API endpoint to get all health data."""
+    return jsonify(health_data)
 
-@app.route('/api/health/<system_name>', methods=['POST'])
-def update_health_status_api(system_name):
-    """API endpoint to update the health status of a specific system."""
-    if system_name not in health_statuses:
-        return jsonify({"error": "System not found"}), 404
+@app.route('/api/categories', methods=['POST'])
+def create_category_api():
+    """API endpoint to create a new category."""
+    data = request.get_json()
+    if not data or 'category_name' not in data:
+        return jsonify({"error": "Missing category_name in request body"}), 400
+
+    category_name = data['category_name']
+    if category_name in health_data:
+        return jsonify({"error": f"Category '{category_name}' already exists"}), 400
+
+    health_data[category_name] = {}
+    return jsonify({category_name: health_data[category_name]}), 201
+
+@app.route('/api/categories/<category_name>', methods=['DELETE'])
+def delete_category_api(category_name):
+    """API endpoint to delete a category."""
+    if category_name not in health_data:
+        return jsonify({"error": f"Category '{category_name}' not found"}), 404
+
+    del health_data[category_name]
+    return jsonify({"message": f"Category '{category_name}' deleted successfully"}), 200
+
+@app.route('/api/categories/<category_name>/items', methods=['POST'])
+def create_item_api(category_name):
+    """API endpoint to add a new item to a category."""
+    if category_name not in health_data:
+        return jsonify({"error": f"Category '{category_name}' not found"}), 404
+
+    data = request.get_json()
+    if not data or 'item_name' not in data:
+        return jsonify({"error": "Missing item_name in request body"}), 400
+
+    item_name = data['item_name']
+    if item_name in health_data[category_name]:
+        return jsonify({"error": f"Item '{item_name}' already exists in category '{category_name}'"}), 400
+
+    health_data[category_name][item_name] = get_default_item_status()
+    health_data[category_name][item_name]['last_updated'] = datetime.datetime.utcnow().isoformat() + 'Z'
+    return jsonify({item_name: health_data[category_name][item_name]}), 201
+
+@app.route('/api/categories/<category_name>/items/<item_name>', methods=['DELETE'])
+def delete_item_api(category_name, item_name):
+    """API endpoint to delete an item from a category."""
+    if category_name not in health_data:
+        return jsonify({"error": f"Category '{category_name}' not found"}), 404
+    if item_name not in health_data[category_name]:
+        return jsonify({"error": f"Item '{item_name}' not found in category '{category_name}'"}), 404
+
+    del health_data[category_name][item_name]
+    # Optional: if category becomes empty, delete it? For now, allow empty categories.
+    # if not health_data[category_name]:
+    #     del health_data[category_name]
+    return jsonify({"message": f"Item '{item_name}' from category '{category_name}' deleted successfully"}), 200
+
+@app.route('/api/categories/<category_name>/items/<item_name>', methods=['PUT'])
+def update_item_api(category_name, item_name):
+    """API endpoint to update an item's status, message, or url."""
+    if category_name not in health_data:
+        return jsonify({"error": f"Category '{category_name}' not found"}), 404
+    if item_name not in health_data[category_name]:
+        return jsonify({"error": f"Item '{item_name}' not found in category '{category_name}'"}), 404
 
     data = request.get_json()
     if not data:
         return jsonify({"error": "Invalid JSON payload"}), 400
 
+    item = health_data[category_name][item_name]
+
     valid_statuses = ["running", "down", "passing", "failing", "unknown"]
-    new_status = data.get('status')
+    if 'status' in data:
+        new_status = data['status'].lower()
+        if new_status not in valid_statuses:
+            return jsonify({"error": f"Invalid status. Must be one of: {', '.join(valid_statuses)}"}), 400
+        item['status'] = new_status
 
-    if new_status and new_status.lower() not in valid_statuses:
-        return jsonify({"error": f"Invalid status. Must be one of: {', '.join(valid_statuses)}"}), 400
+    if 'message' in data:
+        item['message'] = data['message']
 
-    # Update fields if provided in the request
-    if new_status:
-        health_statuses[system_name]['status'] = new_status.lower()
-    if 'message' in data: # Allow empty string for message
-        health_statuses[system_name]['message'] = data['message']
-    if 'url' in data: # Allow empty string for url
-        health_statuses[system_name]['url'] = data['url']
+    if 'url' in data:
+        item['url'] = data['url']
 
-    health_statuses[system_name]['last_updated'] = datetime.datetime.utcnow().isoformat() + 'Z'
+    item['last_updated'] = datetime.datetime.utcnow().isoformat() + 'Z'
 
-    return jsonify({system_name: health_statuses[system_name]})
+    return jsonify({item_name: item})
 
 if __name__ == '__main__':
-    # Note: debug=True is for development only.
-    # Use a production WSGI server (e.g., Gunicorn) for deployment.
+    # Ensure Flask runs on 0.0.0.0 to be accessible externally if needed (e.g. in a container)
+    # Port 5000 is standard for Flask dev.
     app.run(debug=True, host='0.0.0.0', port=5000)
