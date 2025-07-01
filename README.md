@@ -152,3 +152,22 @@ The base URL for the API is `http://localhost:5000/api`.
 -   `setup_dashboard.sh`: Initializes a set of common categories and items.
 -   `update_status_examples.sh`: Updates the statuses of some of the pre-initialized items to demonstrate different states.
 Make sure these scripts are executable (`chmod +x *.sh`).
+
+## Running Tests
+
+This project includes unit tests for the API and simulation tests for the example shell scripts.
+
+1.  **Navigate to the project root directory.**
+2.  **Run the tests using the `unittest` module:**
+    ```bash
+    python -m unittest discover tests
+    ```
+    Or, to run a specific test file:
+    ```bash
+    python -m unittest tests.test_app
+    python -m unittest tests.test_scripts
+    ```
+
+The tests are located in the `tests/` directory:
+-   `tests/test_app.py`: Contains unit tests for the Flask API endpoints.
+-   `tests/test_scripts.py`: Contains tests that simulate the execution of `setup_dashboard.sh` and `update_status_examples.sh` to verify their intended effect on the application state.
