@@ -16,19 +16,21 @@ class TestAppAPI(unittest.TestCase):
         self.client = main_app.app.test_client()
         main_app.health_data.clear()
 
-        # Correctly patch datetime.datetime.utcnow within the 'app' module's scope
-        self.patcher_utcnow = patch('app.datetime.datetime.utcnow')
-        self.mocked_utcnow = self.patcher_utcnow.start()
-        # Configure the mock for the chain: utcnow().isoformat()
-        self.mocked_utcnow.return_value.isoformat.return_value = "2023-01-01T12:00:00"
+        # Patch datetime.datetime within the 'app' module's scope
+        self.patcher_datetime = patch('app.datetime.datetime')
+        self.mocked_datetime_class = self.patcher_datetime.start()
+
+        # Configure the mock for the chain: datetime.datetime.utcnow().isoformat()
+        # self.mocked_datetime_class.utcnow.return_value will be a MagicMock by default
+        self.mocked_datetime_class.utcnow.return_value.isoformat.return_value = "2023-01-01T12:00:00"
 
     def tearDown(self):
         """Clean up after each test."""
-        self.patcher_utcnow.stop() # Stop the specific patcher
+        self.patcher_datetime.stop()
 
     def _get_expected_timestamp(self):
-        # The mocked utcnow().isoformat() directly returns the string part
-        return self.mocked_utcnow.return_value.isoformat.return_value + 'Z'
+        # Access the configured return value through the mocked class structure
+        return self.mocked_datetime_class.utcnow.return_value.isoformat.return_value + 'Z'
 
 
     # Category Tests
