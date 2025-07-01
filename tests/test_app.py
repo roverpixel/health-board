@@ -1,12 +1,12 @@
 import unittest
 import json
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch # Removed MagicMock as it's implicitly used by patch
 import sys
 import os
 
 # Adjust path to import app from the parent directory
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-import app as main_app # Renamed to avoid conflict with 'app' instance
+import app as main_app
 
 class TestAppAPI(unittest.TestCase):
 
@@ -14,20 +14,21 @@ class TestAppAPI(unittest.TestCase):
         """Set up for each test."""
         main_app.app.testing = True
         self.client = main_app.app.test_client()
-        # Reset health_data before each test
         main_app.health_data.clear()
-        # Mock datetime
-        self.mock_datetime = MagicMock()
-        self.mock_datetime.utcnow.return_value.isoformat.return_value = "2023-01-01T12:00:00" # No 'Z' for direct isoformat
-        self.patcher = patch('app.datetime', self.mock_datetime) # Patch 'app.datetime'
-        self.patcher.start()
+
+        # Correctly patch datetime.datetime.utcnow within the 'app' module's scope
+        self.patcher_utcnow = patch('app.datetime.datetime.utcnow')
+        self.mocked_utcnow = self.patcher_utcnow.start()
+        # Configure the mock for the chain: utcnow().isoformat()
+        self.mocked_utcnow.return_value.isoformat.return_value = "2023-01-01T12:00:00"
 
     def tearDown(self):
         """Clean up after each test."""
-        self.patcher.stop()
+        self.patcher_utcnow.stop() # Stop the specific patcher
 
     def _get_expected_timestamp(self):
-        return self.mock_datetime.utcnow.return_value.isoformat.return_value + 'Z'
+        # The mocked utcnow().isoformat() directly returns the string part
+        return self.mocked_utcnow.return_value.isoformat.return_value + 'Z'
 
 
     # Category Tests
@@ -106,7 +107,7 @@ class TestAppAPI(unittest.TestCase):
 
     def test_update_item_partial(self):
         self.client.post('/api/categories', json={'category_name': 'Cat1'})
-        self.client.post('/api/categories/Cat1/items', json={'item_name': 'Item1'}) # Initial state: unknown, no msg/url
+        self.client.post('/api/categories/Cat1/items', json={'item_name': 'Item1'})
 
         update_payload = {"status": "failing"}
         response = self.client.put('/api/categories/Cat1/items/Item1', json=update_payload)
@@ -115,8 +116,8 @@ class TestAppAPI(unittest.TestCase):
         expected_item_data = {
             "status": "failing",
             "last_updated": self._get_expected_timestamp(),
-            "message": "", # Unchanged
-            "url": ""      # Unchanged
+            "message": "",
+            "url": ""
         }
         self.assertEqual(response.json['Item1'], expected_item_data)
         self.assertEqual(main_app.health_data['Cat1']['Item1'], expected_item_data)
@@ -152,7 +153,6 @@ class TestAppAPI(unittest.TestCase):
         response = self.client.delete('/api/categories/Cat1/items/NonExistentItem')
         self.assertEqual(response.status_code, 404)
 
-    # GET Health Data Test
     def test_get_health_data(self):
         self.client.post('/api/categories', json={'category_name': 'Cat1'})
         self.client.post('/api/categories/Cat1/items', json={'item_name': 'Item1'})
