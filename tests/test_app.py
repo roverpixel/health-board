@@ -130,6 +130,23 @@ class TestAppAPI(unittest.TestCase):
         response = self.client.put('/api/categories/Cat1/items/Item1', json={'status': 'invalid_state'})
         self.assertEqual(response.status_code, 400)
 
+    def test_update_item_status_up(self):
+        self.client.post('/api/categories', json={'category_name': 'Cat1'})
+        self.client.post('/api/categories/Cat1/items', json={'item_name': 'Item1'})
+
+        update_payload = {"status": "up"}
+        response = self.client.put('/api/categories/Cat1/items/Item1', json=update_payload)
+        self.assertEqual(response.status_code, 200)
+
+        expected_item_data = {
+            "status": "up",
+            "last_updated": self._get_expected_timestamp(),
+            "message": "",
+            "url": ""
+        }
+        self.assertEqual(response.json['Item1'], expected_item_data)
+        self.assertEqual(main_app.health_data['Cat1']['Item1'], expected_item_data)
+
     def test_update_item_category_not_found(self):
         response = self.client.put('/api/categories/NonExistentCat/items/Item1', json={'status': 'passing'})
         self.assertEqual(response.status_code, 404)
