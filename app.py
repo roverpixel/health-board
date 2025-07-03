@@ -68,7 +68,10 @@ def create_item_api(category_name):
 
     item_name = data['item_name']
     if item_name in health_data[category_name]:
-        return jsonify({"error": f"Item '{item_name}' already exists in category '{category_name}'"}), 400
+        existing_item_data = health_data[category_name][item_name]
+        response_data = {"note": "Item already existed."}
+        response_data.update(existing_item_data)
+        return jsonify(response_data), 200
 
     health_data[category_name][item_name] = get_default_item_status()
     health_data[category_name][item_name]['last_updated'] = datetime.datetime.utcnow().isoformat() + 'Z'
@@ -122,7 +125,7 @@ def update_item_api(category_name, item_name):
     return jsonify({item_name: item})
 
 
-@app.route('/checkpoint', methods=['POST'])
+@app.route('/api/checkpoint', methods=['POST'])
 def checkpoint_data():
     """Saves the current health_data to a file."""
     try:
@@ -133,7 +136,7 @@ def checkpoint_data():
         return jsonify({"error": f"Failed to write checkpoint file: {str(e)}"}), 500
 
 
-@app.route('/restore', methods=['POST'])
+@app.route('/api/restore', methods=['POST'])
 def restore_data():
     """Restores health_data from a file."""
     global health_data  # noqa: F824

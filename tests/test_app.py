@@ -81,9 +81,21 @@ class TestAppAPI(unittest.TestCase):
 
     def test_create_item_duplicate(self):
         self.client.post('/api/categories', json={'category_name': 'Cat1'})
-        self.client.post('/api/categories/Cat1/items', json={'item_name': 'Item1'})
+        # First creation
+        first_response = self.client.post('/api/categories/Cat1/items', json={'item_name': 'Item1'})
+        self.assertEqual(first_response.status_code, 201)
+        created_item_data = first_response.json['Item1']
+
+        # Attempt to create duplicate
         response = self.client.post('/api/categories/Cat1/items', json={'item_name': 'Item1'})
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 200)
+        response_json = response.json
+        self.assertEqual(response_json.get("note"), "Item already existed.")
+        # Check that the other fields match the originally created item
+        self.assertEqual(response_json.get("status"), created_item_data["status"])
+        self.assertEqual(response_json.get("last_updated"), created_item_data["last_updated"])
+        self.assertEqual(response_json.get("message"), created_item_data["message"])
+        self.assertEqual(response_json.get("url"), created_item_data["url"])
 
     def test_create_item_missing_name(self):
         self.client.post('/api/categories', json={'category_name': 'Cat1'})
@@ -210,7 +222,7 @@ class TestAppAPI(unittest.TestCase):
         initial_data = main_app.health_data.copy()
 
         # 2. Test /checkpoint
-        response_checkpoint = self.client.post('/checkpoint')
+        response_checkpoint = self.client.post('/api/checkpoint')
         self.assertEqual(response_checkpoint.status_code, 200)
         self.assertIn("Data checkpointed successfully", response_checkpoint.json['message'])
 
@@ -239,7 +251,7 @@ class TestAppAPI(unittest.TestCase):
         if os.path.exists('health_data.json'):
             os.remove('health_data.json')
 
-        response = self.client.post('/restore')
+        response = self.client.post('/api/restore')
         self.assertEqual(response.status_code, 404)
         self.assertIn("not found", response.json['error'])
 
@@ -248,7 +260,7 @@ class TestAppAPI(unittest.TestCase):
         with open('health_data.json', 'w') as f:
             f.write("this is not valid json")
 
-        response = self.client.post('/restore')
+        response = self.client.post('/api/restore')
         self.assertEqual(response.status_code, 500)
         self.assertIn("Invalid JSON", response.json['error'])
 
