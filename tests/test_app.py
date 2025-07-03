@@ -237,7 +237,7 @@ class TestAppAPI(unittest.TestCase):
         main_app.health_data['AnotherCat'] = {} # Make it different from checkpointed data
 
         # 4. Test /restore
-        response_restore = self.client.post('/restore')
+        response_restore = self.client.post('/api/restore')
         self.assertEqual(response_restore.status_code, 200)
         self.assertIn("Data restored successfully", response_restore.json['message'])
         self.assertEqual(main_app.health_data, initial_data) # Should be back to original
