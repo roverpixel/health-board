@@ -20,8 +20,86 @@ as well as updates to item statuses.
     -   Querying all health data.
     -   Creating and deleting categories.
     -   Creating, deleting, and updating items within categories.
+    - Checkpointing current state to a file.
+    - Restoring state from a checkpoint file.
 
-## Project Structure
+## CLI Client (`health_board.py`)
+
+A command-line client, `health_board.py`, is provided for interacting with the Health Dashboard API.
+
+### CLI Setup
+
+1.  **Prerequisites:**
+    *   Python 3.x
+    *   `click` library: `pip install click`
+    *   `requests` library: `pip install requests`
+
+2.  **Make the client executable:**
+    ```bash
+    chmod +x health_board.py
+    ```
+    This allows you to run it directly (e.g., `./health_board.py ...`). You can also run it with `python health_board.py ...`.
+
+### CLI Usage
+
+The primary way to run the client after making it executable is `./health_board.py`.
+
+**General Help:**
+```bash
+./health_board.py --help
+```
+
+**Commands:**
+
+*   **`show`**: Display the current board data.
+    ```bash
+    ./health_board.py show
+    ```
+
+*   **`create category <category_name>`**: Create a new category.
+    ```bash
+    ./health_board.py create category "Deployment Pipelines"
+    ```
+
+*   **`create item <category_name> <item_name>`**: Create a new item within a category.
+    ```bash
+    ./health_board.py create item "Deployment Pipelines" "Production Deploy"
+    ```
+
+*   **`update item <category_name> <item_name> [OPTIONS]`**: Update an item's status, message, or URL.
+    *   `--status TEXT`: New status (e.g., running, down, passing, failing, unknown, up).
+    *   `--message TEXT`: Descriptive message.
+    *   `--url TEXT`: Related URL.
+    ```bash
+    ./health_board.py update item "Deployment Pipelines" "Production Deploy" --status passing --message "v1.2.3 deployed successfully" --url "http://deploy.example.com/prod/123"
+    ./health_board.py update item "Deployment Pipelines" "Production Deploy" --status failing
+    ```
+
+*   **`remove category <category_name>`**: Remove a category and all its items.
+    ```bash
+    ./health_board.py remove category "Deployment Pipelines"
+    ```
+
+*   **`remove item <category_name> <item_name>`**: Remove an item from a category.
+    ```bash
+    ./health_board.py remove item "Deployment Pipelines" "Production Deploy"
+    ```
+
+*   **`save`**: Save the current board data to `health_data.json`.
+    ```bash
+    ./health_board.py save
+    ```
+
+*   **`restore`**: Restore board data from `health_data.json`.
+    ```bash
+    ./health_board.py restore
+    ```
+
+---
+
+## Web Application
+
+### Project Structure
 
 ```
 .
