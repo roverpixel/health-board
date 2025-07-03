@@ -31,6 +31,35 @@ def get_health_data_api():
     return jsonify(health_data)
 
 
+@app.route('/api/checkpoint', methods=['POST'])
+def checkpoint_data():
+    """Saves the current health_data to a file."""
+    try:
+        with open('health_data.json', 'w') as f:
+            json.dump(health_data, f, indent=4)
+        return jsonify({"message": "Data checkpointed successfully to health_data.json"}), 200
+    except IOError as e:
+        return jsonify({"error": f"Failed to write checkpoint file: {str(e)}"}), 500
+
+
+@app.route('/api/restore', methods=['POST'])
+def restore_data():
+    """Restores health_data from a file."""
+    global health_data  # noqa: F824
+    try:
+        with open('health_data.json', 'r') as f:
+            data_from_file = json.load(f)
+            health_data.clear()
+            health_data.update(data_from_file)
+        return jsonify({"message": "Data restored successfully from health_data.json"}), 200
+    except FileNotFoundError:
+        return jsonify({"error": "Checkpoint file 'health_data.json' not found"}), 404
+    except json.JSONDecodeError as e:
+        return jsonify({"error": f"Invalid JSON in checkpoint file: {str(e)}"}), 500
+    except IOError as e:  # Catch other potential I/O errors during read
+        return jsonify({"error": f"Failed to read checkpoint file: {str(e)}"}), 500
+
+
 @app.route('/api/categories', methods=['POST'])
 def create_category_api():
     """API endpoint to create a new category."""
@@ -123,35 +152,6 @@ def update_item_api(category_name, item_name):
     item['last_updated'] = datetime.datetime.utcnow().isoformat() + 'Z'
 
     return jsonify({item_name: item})
-
-
-@app.route('/api/checkpoint', methods=['POST'])
-def checkpoint_data():
-    """Saves the current health_data to a file."""
-    try:
-        with open('health_data.json', 'w') as f:
-            json.dump(health_data, f, indent=4)
-        return jsonify({"message": "Data checkpointed successfully to health_data.json"}), 200
-    except IOError as e:
-        return jsonify({"error": f"Failed to write checkpoint file: {str(e)}"}), 500
-
-
-@app.route('/api/restore', methods=['POST'])
-def restore_data():
-    """Restores health_data from a file."""
-    global health_data  # noqa: F824
-    try:
-        with open('health_data.json', 'r') as f:
-            data_from_file = json.load(f)
-            health_data.clear()
-            health_data.update(data_from_file)
-        return jsonify({"message": "Data restored successfully from health_data.json"}), 200
-    except FileNotFoundError:
-        return jsonify({"error": "Checkpoint file 'health_data.json' not found"}), 404
-    except json.JSONDecodeError as e:
-        return jsonify({"error": f"Invalid JSON in checkpoint file: {str(e)}"}), 500
-    except IOError as e:  # Catch other potential I/O errors during read
-        return jsonify({"error": f"Failed to read checkpoint file: {str(e)}"}), 500
 
 
 if __name__ == '__main__':
