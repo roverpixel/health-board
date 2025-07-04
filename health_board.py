@@ -8,11 +8,16 @@ BASE_URL = "http://127.0.0.1:5000/api"
 
 @click.group()
 @click.option('--verbose', '-v', is_flag=True, help="Enable verbose output.")
-def board(verbose):
-    """A CLI client to interact with the Health Dashboard API."""
-    # Store verbose flag in context for other commands to use
+@click.option('--base-url', envvar='HEALTH_BOARD_URL', default='http://127.0.0.1:5000/api', help="Base URL for the Health Dashboard API. Can also be set via HEALTH_BOARD_URL env var.")
+def board(verbose, base_url):
+    """A CLI to interact with the Health Dashboard API."""
+    # Store flags and resolved base_url in context for other commands to use
     ctx = click.get_current_context()
-    ctx.obj = {'verbose': verbose}
+    ctx.obj = {
+        'verbose': verbose,
+        'base_url': base_url
+    }
+
 
 # --- API Interaction Functions ---
 
@@ -38,28 +43,28 @@ def handle_response(response, verbose=False):
             click.echo(response.text or "No additional error information.")
     return response.ok # Return True if successful, False otherwise
 
-def api_get_health():
-    return requests.get(f"{BASE_URL}/health")
+def api_get_health(base_url):
+    return requests.get(f"{base_url}/health")
 
-def api_checkpoint():
-    return requests.post(f"{BASE_URL}/checkpoint")
+def api_checkpoint(base_url):
+    return requests.post(f"{base_url}/checkpoint")
 
-def api_restore():
-    return requests.post(f"{BASE_URL}/restore")
+def api_restore(base_url):
+    return requests.post(f"{base_url}/restore")
 
-def api_create_category(category_name):
-    return requests.post(f"{BASE_URL}/categories", json={"category_name": category_name})
+def api_create_category(base_url, category_name):
+    return requests.post(f"{base_url}/categories", json={"category_name": category_name})
 
-def api_delete_category(category_name):
-    return requests.delete(f"{BASE_URL}/categories/{category_name}")
+def api_delete_category(base_url, category_name):
+    return requests.delete(f"{base_url}/categories/{category_name}")
 
-def api_create_item(category_name, item_name):
-    return requests.post(f"{BASE_URL}/categories/{category_name}/items", json={"item_name": item_name})
+def api_create_item(base_url, category_name, item_name):
+    return requests.post(f"{base_url}/categories/{category_name}/items", json={"item_name": item_name})
 
-def api_delete_item(category_name, item_name):
-    return requests.delete(f"{BASE_URL}/categories/{category_name}/items/{item_name}")
+def api_delete_item(base_url, category_name, item_name):
+    return requests.delete(f"{base_url}/categories/{category_name}/items/{item_name}")
 
-def api_update_item(category_name, item_name, status=None, message=None, url=None):
+def api_update_item(base_url, category_name, item_name, status=None, message=None, url=None):
     payload = {}
     if status is not None:
         payload['status'] = status
@@ -76,8 +81,6 @@ def api_update_item(category_name, item_name, status=None, message=None, url=Non
 
 # --- CLI Commands ---
 
-# --- CLI Commands ---
-
 @board.group()
 def create():
     """Create a new category or item."""
@@ -89,11 +92,16 @@ def create():
 def create_category(ctx, category_name):
     """Create a new category. CATEGORY_NAME can be set via HEALTH_BOARD_CATEGORY env var."""
     verbose = ctx.obj['verbose']
+    base_url = ctx.obj['base_url']
 
     if verbose:
         click.echo(f"Creating category: {category_name}...")
-    response = api_create_category(category_name)
-    handle_response(response, verbose)
+    try:
+        response = api_create_category(base_url, category_name)
+        handle_response(response, verbose)
+    except requests.exceptions.RequestException as e:
+        click.echo(click.style(f"API Request Error: {e}", fg="red"), err=True)
+
 
 @create.command(name="item")
 @click.argument('category_name', envvar='HEALTH_BOARD_CATEGORY')
@@ -102,11 +110,16 @@ def create_category(ctx, category_name):
 def create_item(ctx, category_name, item_name):
     """Create a new item. CATEGORY_NAME can be set via HEALTH_BOARD_CATEGORY and ITEM_NAME via HEALTH_BOARD_ITEM."""
     verbose = ctx.obj['verbose']
+    base_url = ctx.obj['base_url']
 
     if verbose:
         click.echo(f"Creating item '{item_name}' in category '{category_name}'...")
-    response = api_create_item(category_name, item_name)
-    handle_response(response, verbose)
+    try:
+        response = api_create_item(base_url, category_name, item_name)
+        handle_response(response, verbose)
+    except requests.exceptions.RequestException as e:
+        click.echo(click.style(f"API Request Error: {e}", fg="red"), err=True)
+
 
 @board.group()
 def remove():
@@ -119,13 +132,18 @@ def remove():
 def remove_category(ctx, category_name):
     """Remove a category. CATEGORY_NAME can be set via HEALTH_BOARD_CATEGORY env var."""
     verbose = ctx.obj['verbose']
+    base_url = ctx.obj['base_url']
 
 
     if verbose:
         click.echo(f"Removing category: {category_name}...")
     # It might be good to add a confirmation prompt here in a real CLI
-    response = api_delete_category(category_name)
-    handle_response(response, verbose)
+    try:
+        response = api_delete_category(base_url, category_name)
+        handle_response(response, verbose)
+    except requests.exceptions.RequestException as e:
+        click.echo(click.style(f"API Request Error: {e}", fg="red"), err=True)
+
 
 @remove.command(name="item")
 @click.argument('category_name', envvar='HEALTH_BOARD_CATEGORY')
@@ -134,17 +152,21 @@ def remove_category(ctx, category_name):
 def remove_item(ctx, category_name, item_name):
     """Remove an item. CATEGORY_NAME can be set via HEALTH_BOARD_CATEGORY and ITEM_NAME via HEALTH_BOARD_ITEM."""
     verbose = ctx.obj['verbose']
+    base_url = ctx.obj['base_url']
 
     if verbose:
         click.echo(f"Removing item '{item_name}' from category '{category_name}'...")
-    response = api_delete_item(category_name, item_name)
-    handle_response(response, verbose)
+    try:
+        response = api_delete_item(base_url, category_name, item_name)
+        handle_response(response, verbose)
+    except requests.exceptions.RequestException as e:
+        click.echo(click.style(f"API Request Error: {e}", fg="red"), err=True)
+
 
 # Placeholder for update command
 @board.command()
 @click.argument('category_name', envvar='HEALTH_BOARD_CATEGORY')
 @click.argument('item_name', envvar='HEALTH_BOARD_ITEM')
-
 @click.option('--status', help="The new status for the item (e.g., running, down, passing, failing, unknown, up).")
 @click.option('--message', help="A descriptive message for the item's status.")
 @click.option('--url', help="A URL related to the item for more details.")
@@ -152,6 +174,7 @@ def remove_item(ctx, category_name, item_name):
 def update(ctx, category_name, item_name, status, message, url):
     """Update an item. CATEGORY_NAME can be set via HEALTH_BOARD_CATEGORY and ITEM_NAME via HEALTH_BOARD_ITEM."""
     verbose = ctx.obj['verbose']
+    base_url = ctx.obj['base_url']
 
 
     if not status and not message and not url:
@@ -162,9 +185,13 @@ def update(ctx, category_name, item_name, status, message, url):
 
     if verbose:
         click.echo(f"Updating item '{item_name}' in category '{category_name}'...")
-    response = api_update_item(category_name, item_name, status, message, url)
-    if response: # api_update_item returns None if no parameters were given
-        handle_response(response, verbose)
+    try:
+        response = api_update_item(base_url, category_name, item_name, status, message, url)
+        if response: # api_update_item returns None if no parameters were given
+            handle_response(response, verbose)
+    except requests.exceptions.RequestException as e:
+        click.echo(click.style(f"API Request Error: {e}", fg="red"), err=True)
+
 
 # Placeholder for save command
 @board.command()
@@ -172,10 +199,15 @@ def update(ctx, category_name, item_name, status, message, url):
 def save(ctx):
     """Save the current board data to a checkpoint file (health_data.json)."""
     verbose = ctx.obj['verbose']
+    base_url = ctx.obj['base_url']
     if verbose:
         click.echo("Saving (checkpointing) board data...")
-    response = api_checkpoint()
-    handle_response(response, verbose)
+    try:
+        response = api_checkpoint(base_url)
+        handle_response(response, verbose)
+    except requests.exceptions.RequestException as e:
+        click.echo(click.style(f"API Request Error: {e}", fg="red"), err=True)
+
 
 # Placeholder for restore command
 @board.command()
@@ -183,10 +215,15 @@ def save(ctx):
 def restore(ctx):
     """Restore the board data from the checkpoint file (health_data.json)."""
     verbose = ctx.obj['verbose']
+    base_url = ctx.obj['base_url']
     if verbose:
         click.echo("Restoring board data from checkpoint...")
-    response = api_restore()
-    handle_response(response, verbose)
+    try:
+        response = api_restore(base_url)
+        handle_response(response, verbose)
+    except requests.exceptions.RequestException as e:
+        click.echo(click.style(f"API Request Error: {e}", fg="red"), err=True)
+
 
 # Placeholder for show command
 @board.command()
@@ -194,10 +231,20 @@ def restore(ctx):
 def show(ctx):
     """Show the current board data."""
     verbose = ctx.obj['verbose']
+    base_url = ctx.obj['base_url']
     if verbose:
         click.echo("Fetching current board data...")
-    response = api_get_health()
-    handle_response(response, verbose) # This will print the JSON nicely
+    try:
+        response = api_get_health(base_url)
+        # For the show command, we always want to display the response if successful,
+        # overriding the global verbose flag for the handle_response part.
+        if response.ok:
+            handle_response(response, verbose=True)
+        else:
+            handle_response(response, verbose=verbose) # For errors, respect global verbose for consistency
+    except requests.exceptions.RequestException as e:
+        click.echo(click.style(f"API Request Error: {e}", fg="red"), err=True)
+
 
 
 if __name__ == '__main__':
