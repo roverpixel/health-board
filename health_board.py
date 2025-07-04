@@ -5,6 +5,7 @@ import json
 import os
 import functools
 
+
 @click.group()
 @click.option('--verbose', '-v', is_flag=True, help="Enable verbose output.")
 @click.option('--base-url', envvar='HEALTH_BOARD_URL', default='http://127.0.0.1:5000/api', help="Base URL for the Health Dashboard API. Can also be set via HEALTH_BOARD_URL env var.")
@@ -30,6 +31,7 @@ def handle_api_exceptions(func):
             # Consider returning a specific error code or value if needed by the CLI framework
             # For now, it suppresses the exception and prints an error, commands will just terminate.
     return wrapper
+
 
 # --- API Interaction Functions ---
 
@@ -93,8 +95,6 @@ def api_update_item(base_url, category_name, item_name, status=None, message=Non
 
 # --- CLI Commands ---
 
-# --- CLI Commands ---
-
 @board.group()
 def create():
     """Create a new category or item."""
@@ -114,6 +114,7 @@ def create_category(ctx, category_name):
     response = api_create_category(base_url, category_name)
     handle_response(response, verbose)
 
+
 @create.command(name="item")
 @click.argument('category_name', envvar='HEALTH_BOARD_CATEGORY')
 @click.argument('item_name', envvar='HEALTH_BOARD_ITEM')
@@ -128,6 +129,7 @@ def create_item(ctx, category_name, item_name):
         click.echo(f"Creating item '{item_name}' in category '{category_name}'...")
     response = api_create_item(base_url, category_name, item_name)
     handle_response(response, verbose)
+
 
 @board.group()
 def remove():
@@ -149,6 +151,7 @@ def remove_category(ctx, category_name):
     response = api_delete_category(base_url, category_name)
     handle_response(response, verbose)
 
+
 @remove.command(name="item")
 @click.argument('category_name', envvar='HEALTH_BOARD_CATEGORY')
 @click.argument('item_name', envvar='HEALTH_BOARD_ITEM')
@@ -163,6 +166,7 @@ def remove_item(ctx, category_name, item_name):
         click.echo(f"Removing item '{item_name}' from category '{category_name}'...")
     response = api_delete_item(base_url, category_name, item_name)
     handle_response(response, verbose)
+
 
 # Placeholder for update command
 @board.command()
@@ -190,6 +194,7 @@ def update(ctx, category_name, item_name, status, message, url):
     if response: # api_update_item returns None if no parameters were given
         handle_response(response, verbose)
 
+
 # Placeholder for save command
 @board.command()
 @click.pass_context
@@ -203,6 +208,7 @@ def save(ctx):
     response = api_checkpoint(base_url)
     handle_response(response, verbose)
 
+
 # Placeholder for restore command
 @board.command()
 @click.pass_context
@@ -215,6 +221,7 @@ def restore(ctx):
         click.echo("Restoring board data from checkpoint...")
     response = api_restore(base_url)
     handle_response(response, verbose)
+
 
 # Placeholder for show command
 @board.command()
