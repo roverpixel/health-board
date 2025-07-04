@@ -120,6 +120,7 @@ def remove_category(ctx, category_name):
     """Remove a category. CATEGORY_NAME can be set via HEALTH_BOARD_CATEGORY env var."""
     verbose = ctx.obj['verbose']
 
+
     if verbose:
         click.echo(f"Removing category: {category_name}...")
     # It might be good to add a confirmation prompt here in a real CLI
@@ -143,6 +144,7 @@ def remove_item(ctx, category_name, item_name):
 @board.command()
 @click.argument('category_name', envvar='HEALTH_BOARD_CATEGORY')
 @click.argument('item_name', envvar='HEALTH_BOARD_ITEM')
+
 @click.option('--status', help="The new status for the item (e.g., running, down, passing, failing, unknown, up).")
 @click.option('--message', help="A descriptive message for the item's status.")
 @click.option('--url', help="A URL related to the item for more details.")
@@ -150,6 +152,7 @@ def remove_item(ctx, category_name, item_name):
 def update(ctx, category_name, item_name, status, message, url):
     """Update an item. CATEGORY_NAME can be set via HEALTH_BOARD_CATEGORY and ITEM_NAME via HEALTH_BOARD_ITEM."""
     verbose = ctx.obj['verbose']
+
 
     if not status and not message and not url:
         click.echo(click.style("Error: At least one of --status, --message, or --url must be provided.", fg="red"), err=True)
