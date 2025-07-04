@@ -97,6 +97,7 @@ def create_category(ctx, category_name):
         click.echo(click.style("Error: Category name must be provided either as an argument or via HEALTH_BOARD_CATEGORY environment variable.", fg="red"), err=True)
         return
 
+
     if verbose:
         click.echo(f"Creating category: {category_name}...")
     response = api_create_category(category_name)
@@ -125,6 +126,7 @@ def create_item(ctx, category_name, item_name):
         click.echo(click.style(f"Error: The following parameters must be provided: {', '.join(missing_params)}.", fg="red"), err=True)
         return
 
+
     if verbose:
         click.echo(f"Creating item '{item_name}' in category '{category_name}'...")
     response = api_create_item(category_name, item_name)
@@ -148,6 +150,7 @@ def remove_category(ctx, category_name):
     if category_name is None:
         click.echo(click.style("Error: Category name must be provided either as an argument or via HEALTH_BOARD_CATEGORY environment variable.", fg="red"), err=True)
         return
+
 
     if verbose:
         click.echo(f"Removing category: {category_name}...")
@@ -177,6 +180,7 @@ def remove_item(ctx, category_name, item_name):
             missing_params.append("item_name (or HEALTH_BOARD_ITEM)")
         click.echo(click.style(f"Error: The following parameters must be provided: {', '.join(missing_params)}.", fg="red"), err=True)
         return
+
 
     if verbose:
         click.echo(f"Removing item '{item_name}' from category '{category_name}'...")
@@ -209,6 +213,7 @@ def update(ctx, category_name, item_name, status, message, url):
             missing_params.append("item_name (or HEALTH_BOARD_ITEM)")
         click.echo(click.style(f"Error: The following parameters must be provided: {', '.join(missing_params)}.", fg="red"), err=True)
         return
+
 
     if not status and not message and not url:
         click.echo(click.style("Error: At least one of --status, --message, or --url must be provided.", fg="red"), err=True)
