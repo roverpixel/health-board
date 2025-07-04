@@ -2,6 +2,7 @@
 import click
 import requests
 import json
+import os
 
 BASE_URL = "http://127.0.0.1:5000/api"
 
@@ -83,23 +84,49 @@ def create():
     pass
 
 @create.command(name="category")
-@click.argument('category_name')
+@click.argument('category_name', required=False)
 @click.pass_context
 def create_category(ctx, category_name):
-    """Create a new category."""
+    """Create a new category. Reads from HEALTH_BOARD_CATEGORY if not provided."""
     verbose = ctx.obj['verbose']
+
+    if category_name is None:
+        category_name = os.environ.get('HEALTH_BOARD_CATEGORY')
+
+    if category_name is None:
+        click.echo(click.style("Error: Category name must be provided either as an argument or via HEALTH_BOARD_CATEGORY environment variable.", fg="red"), err=True)
+        return
+
+
     if verbose:
         click.echo(f"Creating category: {category_name}...")
     response = api_create_category(category_name)
     handle_response(response, verbose)
 
 @create.command(name="item")
-@click.argument('category_name')
-@click.argument('item_name')
+@click.argument('category_name', required=False)
+@click.argument('item_name', required=False)
 @click.pass_context
 def create_item(ctx, category_name, item_name):
-    """Create a new item within a category."""
+    """Create a new item within a category. Reads from HEALTH_BOARD_CATEGORY and HEALTH_BOARD_ITEM if not provided."""
     verbose = ctx.obj['verbose']
+
+    if category_name is None:
+        category_name = os.environ.get('HEALTH_BOARD_CATEGORY')
+
+    if item_name is None:
+        item_name = os.environ.get('HEALTH_BOARD_ITEM')
+
+    if category_name is None or item_name is None:
+        missing_params = []
+        if category_name is None:
+            missing_params.append("category_name (or HEALTH_BOARD_CATEGORY)")
+        if item_name is None:
+            missing_params.append("item_name (or HEALTH_BOARD_ITEM)")
+        click.echo(click.style(f"Error: The following parameters must be provided: {', '.join(missing_params)}.", fg="red"), err=True)
+        return
+
+
     if verbose:
         click.echo(f"Creating item '{item_name}' in category '{category_name}'...")
     response = api_create_item(category_name, item_name)
@@ -111,11 +138,20 @@ def remove():
     pass
 
 @remove.command(name="category")
-@click.argument('category_name')
+@click.argument('category_name', required=False)
 @click.pass_context
 def remove_category(ctx, category_name):
-    """Remove a category and all its items."""
+    """Remove a category and all its items. Reads from HEALTH_BOARD_CATEGORY if not provided."""
     verbose = ctx.obj['verbose']
+
+    if category_name is None:
+        category_name = os.environ.get('HEALTH_BOARD_CATEGORY')
+
+    if category_name is None:
+        click.echo(click.style("Error: Category name must be provided either as an argument or via HEALTH_BOARD_CATEGORY environment variable.", fg="red"), err=True)
+        return
+
+
     if verbose:
         click.echo(f"Removing category: {category_name}...")
     # It might be good to add a confirmation prompt here in a real CLI
@@ -123,12 +159,29 @@ def remove_category(ctx, category_name):
     handle_response(response, verbose)
 
 @remove.command(name="item")
-@click.argument('category_name')
-@click.argument('item_name')
+@click.argument('category_name', required=False)
+@click.argument('item_name', required=False)
 @click.pass_context
 def remove_item(ctx, category_name, item_name):
-    """Remove an item from a category."""
+    """Remove an item from a category. Reads from HEALTH_BOARD_CATEGORY and HEALTH_BOARD_ITEM if not provided."""
     verbose = ctx.obj['verbose']
+
+    if category_name is None:
+        category_name = os.environ.get('HEALTH_BOARD_CATEGORY')
+
+    if item_name is None:
+        item_name = os.environ.get('HEALTH_BOARD_ITEM')
+
+    if category_name is None or item_name is None:
+        missing_params = []
+        if category_name is None:
+            missing_params.append("category_name (or HEALTH_BOARD_CATEGORY)")
+        if item_name is None:
+            missing_params.append("item_name (or HEALTH_BOARD_ITEM)")
+        click.echo(click.style(f"Error: The following parameters must be provided: {', '.join(missing_params)}.", fg="red"), err=True)
+        return
+
+
     if verbose:
         click.echo(f"Removing item '{item_name}' from category '{category_name}'...")
     response = api_delete_item(category_name, item_name)
@@ -136,17 +189,34 @@ def remove_item(ctx, category_name, item_name):
 
 # Placeholder for update command
 @board.command()
-@click.argument('category_name')
-@click.argument('item_name')
+@click.argument('category_name', required=False)
+@click.argument('item_name', required=False)
 @click.option('--status', help="The new status for the item (e.g., running, down, passing, failing, unknown, up).")
 @click.option('--message', help="A descriptive message for the item's status.")
 @click.option('--url', help="A URL related to the item for more details.")
 @click.pass_context
 def update(ctx, category_name, item_name, status, message, url):
-    """Update an item's status, message, or URL."""
+    """Update an item's status, message, or URL. Reads from HEALTH_BOARD_CATEGORY and HEALTH_BOARD_ITEM if not provided."""
     verbose = ctx.obj['verbose']
+
+    if category_name is None:
+        category_name = os.environ.get('HEALTH_BOARD_CATEGORY')
+
+    if item_name is None:
+        item_name = os.environ.get('HEALTH_BOARD_ITEM')
+
+    if category_name is None or item_name is None:
+        missing_params = []
+        if category_name is None:
+            missing_params.append("category_name (or HEALTH_BOARD_CATEGORY)")
+        if item_name is None:
+            missing_params.append("item_name (or HEALTH_BOARD_ITEM)")
+        click.echo(click.style(f"Error: The following parameters must be provided: {', '.join(missing_params)}.", fg="red"), err=True)
+        return
+
+
     if not status and not message and not url:
-        click.echo(click.style("Error: At least one of --status, --message, or --url must be provided.", fg="red"))
+        click.echo(click.style("Error: At least one of --status, --message, or --url must be provided.", fg="red"), err=True)
         # You might want to show help here or exit with an error code
         # For now, just printing and returning
         return
