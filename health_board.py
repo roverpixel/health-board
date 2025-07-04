@@ -84,19 +84,11 @@ def create():
     pass
 
 @create.command(name="category")
-@click.argument('category_name', required=False)
+@click.argument('category_name', envvar='HEALTH_BOARD_CATEGORY')
 @click.pass_context
 def create_category(ctx, category_name):
-    """Create a new category. Reads from HEALTH_BOARD_CATEGORY if not provided."""
+    """Create a new category. CATEGORY_NAME can be set via HEALTH_BOARD_CATEGORY env var."""
     verbose = ctx.obj['verbose']
-
-    if category_name is None:
-        category_name = os.environ.get('HEALTH_BOARD_CATEGORY')
-
-    if category_name is None:
-        click.echo(click.style("Error: Category name must be provided either as an argument or via HEALTH_BOARD_CATEGORY environment variable.", fg="red"), err=True)
-        return
-
 
     if verbose:
         click.echo(f"Creating category: {category_name}...")
@@ -104,28 +96,12 @@ def create_category(ctx, category_name):
     handle_response(response, verbose)
 
 @create.command(name="item")
-@click.argument('category_name', required=False)
-@click.argument('item_name', required=False)
+@click.argument('category_name', envvar='HEALTH_BOARD_CATEGORY')
+@click.argument('item_name', envvar='HEALTH_BOARD_ITEM')
 @click.pass_context
 def create_item(ctx, category_name, item_name):
-    """Create a new item within a category. Reads from HEALTH_BOARD_CATEGORY and HEALTH_BOARD_ITEM if not provided."""
+    """Create a new item. CATEGORY_NAME can be set via HEALTH_BOARD_CATEGORY and ITEM_NAME via HEALTH_BOARD_ITEM."""
     verbose = ctx.obj['verbose']
-
-    if category_name is None:
-        category_name = os.environ.get('HEALTH_BOARD_CATEGORY')
-
-    if item_name is None:
-        item_name = os.environ.get('HEALTH_BOARD_ITEM')
-
-    if category_name is None or item_name is None:
-        missing_params = []
-        if category_name is None:
-            missing_params.append("category_name (or HEALTH_BOARD_CATEGORY)")
-        if item_name is None:
-            missing_params.append("item_name (or HEALTH_BOARD_ITEM)")
-        click.echo(click.style(f"Error: The following parameters must be provided: {', '.join(missing_params)}.", fg="red"), err=True)
-        return
-
 
     if verbose:
         click.echo(f"Creating item '{item_name}' in category '{category_name}'...")
@@ -138,18 +114,11 @@ def remove():
     pass
 
 @remove.command(name="category")
-@click.argument('category_name', required=False)
+@click.argument('category_name', envvar='HEALTH_BOARD_CATEGORY')
 @click.pass_context
 def remove_category(ctx, category_name):
-    """Remove a category and all its items. Reads from HEALTH_BOARD_CATEGORY if not provided."""
+    """Remove a category. CATEGORY_NAME can be set via HEALTH_BOARD_CATEGORY env var."""
     verbose = ctx.obj['verbose']
-
-    if category_name is None:
-        category_name = os.environ.get('HEALTH_BOARD_CATEGORY')
-
-    if category_name is None:
-        click.echo(click.style("Error: Category name must be provided either as an argument or via HEALTH_BOARD_CATEGORY environment variable.", fg="red"), err=True)
-        return
 
 
     if verbose:
@@ -159,28 +128,12 @@ def remove_category(ctx, category_name):
     handle_response(response, verbose)
 
 @remove.command(name="item")
-@click.argument('category_name', required=False)
-@click.argument('item_name', required=False)
+@click.argument('category_name', envvar='HEALTH_BOARD_CATEGORY')
+@click.argument('item_name', envvar='HEALTH_BOARD_ITEM')
 @click.pass_context
 def remove_item(ctx, category_name, item_name):
-    """Remove an item from a category. Reads from HEALTH_BOARD_CATEGORY and HEALTH_BOARD_ITEM if not provided."""
+    """Remove an item. CATEGORY_NAME can be set via HEALTH_BOARD_CATEGORY and ITEM_NAME via HEALTH_BOARD_ITEM."""
     verbose = ctx.obj['verbose']
-
-    if category_name is None:
-        category_name = os.environ.get('HEALTH_BOARD_CATEGORY')
-
-    if item_name is None:
-        item_name = os.environ.get('HEALTH_BOARD_ITEM')
-
-    if category_name is None or item_name is None:
-        missing_params = []
-        if category_name is None:
-            missing_params.append("category_name (or HEALTH_BOARD_CATEGORY)")
-        if item_name is None:
-            missing_params.append("item_name (or HEALTH_BOARD_ITEM)")
-        click.echo(click.style(f"Error: The following parameters must be provided: {', '.join(missing_params)}.", fg="red"), err=True)
-        return
-
 
     if verbose:
         click.echo(f"Removing item '{item_name}' from category '{category_name}'...")
@@ -189,30 +142,16 @@ def remove_item(ctx, category_name, item_name):
 
 # Placeholder for update command
 @board.command()
-@click.argument('category_name', required=False)
-@click.argument('item_name', required=False)
+@click.argument('category_name', envvar='HEALTH_BOARD_CATEGORY')
+@click.argument('item_name', envvar='HEALTH_BOARD_ITEM')
+
 @click.option('--status', help="The new status for the item (e.g., running, down, passing, failing, unknown, up).")
 @click.option('--message', help="A descriptive message for the item's status.")
 @click.option('--url', help="A URL related to the item for more details.")
 @click.pass_context
 def update(ctx, category_name, item_name, status, message, url):
-    """Update an item's status, message, or URL. Reads from HEALTH_BOARD_CATEGORY and HEALTH_BOARD_ITEM if not provided."""
+    """Update an item. CATEGORY_NAME can be set via HEALTH_BOARD_CATEGORY and ITEM_NAME via HEALTH_BOARD_ITEM."""
     verbose = ctx.obj['verbose']
-
-    if category_name is None:
-        category_name = os.environ.get('HEALTH_BOARD_CATEGORY')
-
-    if item_name is None:
-        item_name = os.environ.get('HEALTH_BOARD_ITEM')
-
-    if category_name is None or item_name is None:
-        missing_params = []
-        if category_name is None:
-            missing_params.append("category_name (or HEALTH_BOARD_CATEGORY)")
-        if item_name is None:
-            missing_params.append("item_name (or HEALTH_BOARD_ITEM)")
-        click.echo(click.style(f"Error: The following parameters must be provided: {', '.join(missing_params)}.", fg="red"), err=True)
-        return
 
 
     if not status and not message and not url:
