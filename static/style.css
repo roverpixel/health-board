@@ -49,7 +49,30 @@ tr:hover {
     border: 1px solid rgba(0,0,0,0.1);
 }
 
-.status-running, .status-passing { background-color: #28a745; } /* Green */
+@keyframes pulse-glow {
+    0% {
+        box-shadow: var(--pulse-shadow-start);
+    }
+    50% {
+        box-shadow: var(--pulse-shadow-peak);
+    }
+    100% {
+        box-shadow: var(--pulse-shadow-end);
+    }
+}
+
+.status-running {
+    --pulse-shadow-start: 0 0 2px 2px rgb(0 255 56 / 32%);
+    --pulse-shadow-peak: 0 0 6px 6px rgb(33 255 82 / 80%); /* Alpha updated to 80% */
+    --pulse-shadow-end: 0 0 2px 2px rgb(0 255 56 / 24%);
+    background-color: #3cba54;
+    box-shadow: var(--pulse-shadow-start);
+    animation-name: pulse-glow;
+    animation-duration: 3s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+}
+.status-passing { background-color: #28a745; } /* Green */
 .status-down, .status-failing { background-color: #dc3545; } /* Red */
 .status-unknown { background-color: #ffc107; } /* Yellow */
 
