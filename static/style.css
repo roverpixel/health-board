@@ -72,7 +72,7 @@ tr:hover {
     animation-iteration-count: infinite;
     animation-timing-function: ease-in-out;
 }
-.status-passing { background-color: #28a745; } /* Green */
+.status-passing, .status-up { background-color: #28a745; } /* Green */
 .status-down, .status-failing { background-color: #dc3545; } /* Red */
 .status-unknown { background-color: #ffc107; } /* Yellow */
 
