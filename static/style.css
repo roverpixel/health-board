@@ -65,7 +65,7 @@ tr:hover {
     --pulse-shadow-start: 0 0 2px 2px rgb(0 255 56 / 32%);
     --pulse-shadow-peak: 0 0 6px 6px rgb(33 255 82 / 80%); /* Alpha updated to 80% */
     --pulse-shadow-end: 0 0 2px 2px rgb(0 255 56 / 24%);
-    background-color: #3cba54;
+    background-color: #1aff46;
     box-shadow: var(--pulse-shadow-start);
     animation-name: pulse-glow;
     animation-duration: 3s;
