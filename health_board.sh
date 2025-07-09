@@ -15,6 +15,26 @@ verbose_echo() {
     fi
 }
 
+# Function to URL-encode a string in Bash
+# Handles ASCII characters. For UTF-8, behavior depends on shell's locale.
+# Alphanumeric and -_.~ are not encoded. Space becomes %20. Other chars become %XX.
+url_encode_bash() {
+    local string="${1}"
+    local strlen=${#string}
+    local encoded=""
+    local pos c o
+
+    for (( pos=0 ; pos<strlen ; pos++ )); do
+       c=${string:$pos:1}
+       case "$c" in
+          [-_.~a-zA-Z0-9] ) o="${c}" ;;
+          * )               printf -v o '%%%02x' "'$c"
+       esac
+       encoded+="${o}"
+    done
+    echo "${encoded}"
+}
+
 # Function to handle API responses
 # Usage: handle_response <curl_exit_code> <http_status_code> <response_body>
 handle_response() {
@@ -118,8 +138,8 @@ api_delete_category() {
         echo "Error: Category name cannot be empty." >&2
         return 1
     fi
-    # URL encode category name if needed (though curl often handles this)
-    local encoded_category_name=$(printf "%s" "$category_name" | jq -sRr @uri)
+    # URL encode category name
+    local encoded_category_name=$(url_encode_bash "$category_name")
     local url="${BASE_URL}/categories/${encoded_category_name}"
     verbose_echo "Deleting category '$category_name' from $url..."
     response=$(curl -s -w "%{http_code}" -X DELETE "$url")
@@ -137,7 +157,7 @@ api_create_item() {
         echo "Error: Category name and item name cannot be empty." >&2
         return 1
     fi
-    local encoded_category_name=$(printf "%s" "$category_name" | jq -sRr @uri)
+    local encoded_category_name=$(url_encode_bash "$category_name")
     local url="${BASE_URL}/categories/${encoded_category_name}/items"
     local data="{\"item_name\": \"$item_name\"}"
     verbose_echo "Creating item '$item_name' in category '$category_name' at $url..."
@@ -156,8 +176,8 @@ api_delete_item() {
         echo "Error: Category name and item name cannot be empty." >&2
         return 1
     fi
-    local encoded_category_name=$(printf "%s" "$category_name" | jq -sRr @uri)
-    local encoded_item_name=$(printf "%s" "$item_name" | jq -sRr @uri)
+    local encoded_category_name=$(url_encode_bash "$category_name")
+    local encoded_item_name=$(url_encode_bash "$item_name")
     local url="${BASE_URL}/categories/${encoded_category_name}/items/${encoded_item_name}"
     verbose_echo "Deleting item '$item_name' from category '$category_name' at $url..."
     response=$(curl -s -w "%{http_code}" -X DELETE "$url")
@@ -196,7 +216,7 @@ api_update_item() {
     fi
 
     # Upsert: Attempt to create item (silently, ignore if exists)
-    local encoded_category_name_for_item_creation=$(printf "%s" "$category_name" | jq -sRr @uri)
+    local encoded_category_name_for_item_creation=$(url_encode_bash "$category_name")
     local create_item_url="${BASE_URL}/categories/${encoded_category_name_for_item_creation}/items"
     local create_item_data="{\"item_name\": \"$item_name\"}"
     # Similar to category creation, we want this to be silent on success/already exists.
@@ -258,8 +278,8 @@ api_update_item() {
     done
     data+="}"
 
-    local encoded_category_name=$(printf "%s" "$category_name" | jq -sRr @uri)
-    local encoded_item_name=$(printf "%s" "$item_name" | jq -sRr @uri)
+    local encoded_category_name=$(url_encode_bash "$category_name")
+    local encoded_item_name=$(url_encode_bash "$item_name")
     local url="${BASE_URL}/categories/${encoded_category_name}/items/${encoded_item_name}"
 
     verbose_echo "Updating item '$item_name' in category '$category_name' at $url with data: $data"
@@ -306,7 +326,7 @@ print_usage() {
     echo "  $0 restore"
     echo ""
     echo "Note: Category and item names with spaces should be quoted."
-    echo "Requires curl and jq (for pretty-printing JSON responses)."
+    echo "Requires curl. If jq is installed, JSON responses will be pretty-printed."
 }
 
 # Parse global options like -v or --verbose first
