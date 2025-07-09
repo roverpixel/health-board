@@ -11,7 +11,7 @@ app = Flask(__name__)
 #         "ItemName": {"status": "unknown", "last_updated": None, "message": "", "url": ""}
 #     }
 # }
-health_data = {}
+health_data = {} # Initialize fresh for each run. This is sufficient when app.py is run as a script.
 
 
 def get_default_item_status():
