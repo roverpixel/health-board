@@ -95,6 +95,84 @@ The primary way to run the client after making it executable is `./health_board.
     ./health_board.py restore
     ```
 
+## Bash CLI Client (`health_board.sh`)
+
+A Bash command-line client, `health_board.sh`, is also provided as an alternative for interacting with the Health Dashboard API using `curl`. It mirrors the core functionality of the Python client.
+
+### Bash CLI Setup
+
+1.  **Prerequisites:**
+    *   `bash` (standard on most Linux/macOS systems).
+    *   `curl`: For making HTTP requests.
+    *   `jq`: (Optional, but recommended for pretty-printing JSON responses).
+
+2.  **Make the client executable:**
+    ```bash
+    chmod +x health_board.sh
+    ```
+    This allows you to run it directly (e.g., `./health_board.sh ...`).
+
+### Bash CLI Usage
+
+The primary way to run the client after making it executable is `./health_board.sh`.
+
+**General Usage (prints help):**
+```bash
+./health_board.sh
+```
+(Running the script without arguments or with an unknown command will print its usage instructions.)
+
+**Global Options:**
+*   `-v`, `--verbose`: Enable verbose output. Errors are always printed to stderr.
+
+**Commands (similar to `health_board.py`):**
+
+*   **`show`**: Display the current board data.
+    ```bash
+    ./health_board.sh show
+    ./health_board.sh -v show # For more detailed success messages
+    ```
+
+*   **`create category <category_name>`**: Create a new category.
+    ```bash
+    ./health_board.sh create category "CI Systems"
+    ```
+
+*   **`create item <category_name> <item_name>`**: Create a new item within a category.
+    ```bash
+    ./health_board.sh create item "CI Systems" "Main Build Agent"
+    ```
+
+*   **`update <category_name> <item_name> [OPTIONS]`**: Update an item. Creates the category and/or item if they don't exist (upsert behavior).
+    *   `--status TEXT`: New status (e.g., running, down, passing, failing, unknown, up).
+    *   `--message TEXT`: Descriptive message.
+    *   `--url TEXT`: Related URL.
+    ```bash
+    ./health_board.sh update "CI Systems" "Main Build Agent" --status passing --message "All tests green" --url "http://ci.example.com/build/latest"
+    # Upsert example: this will create "New Service" category and "Status Check" item, then update it.
+    ./health_board.sh update "New Service" "Status Check" --status running --message "Service started."
+    ```
+
+*   **`remove category <category_name>`**: Remove a category and all its items.
+    ```bash
+    ./health_board.sh remove category "CI Systems"
+    ```
+
+*   **`remove item <category_name> <item_name>`**: Remove an item from a category.
+    ```bash
+    ./health_board.sh remove item "CI Systems" "Main Build Agent"
+    ```
+
+*   **`save`**: Save the current board data to `health_data.json`.
+    ```bash
+    ./health_board.sh save
+    ```
+
+*   **`restore`**: Restore board data from `health_data.json`.
+    ```bash
+    ./health_board.sh restore
+    ```
+
 ---
 
 ## Web Application
