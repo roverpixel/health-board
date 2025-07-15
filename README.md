@@ -95,6 +95,47 @@ The primary way to run the client after making it executable is `./health_board.
     ./health_board.py restore
     ```
 
+## Python API Client (`health_board_api.py`)
+
+A Python client, `health_board_api.py`, is provided for programmatic interaction with the Health Dashboard API.
+
+### `HealthBoard` Class
+
+The `HealthBoard` class is a general-purpose client for the API.
+
+**Initialization:**
+```python
+from health_board_api import HealthBoard
+
+client = HealthBoard(base_url="http://127.0.0.1:5000/api")
+```
+
+**Methods:**
+-   `get_health()`: Fetches the entire health board.
+-   `create_category(category_name)`
+-   `delete_category(category_name)`
+-   `create_item(category_name, item_name)`
+-   `delete_item(category_name, item_name)`
+-   `update_item(category_name, item_name, status, message, url)`
+-   `checkpoint()`: Saves the current state to a file.
+-   `restore()`: Restores the state from a file.
+
+### `HealthBoardUpdater` Class
+
+The `HealthBoardUpdater` class is a specialized client for updating a single, specific item. It inherits from `HealthBoard`.
+
+**Initialization:**
+```python
+from health_board_api import HealthBoardUpdater
+
+item_updater = HealthBoardUpdater(base_url="http://127.0.0.1:5000/api", category="services", item="database")
+```
+
+**Methods:**
+-   `update_item(status, message, url)`: Updates the specific item this client is configured for.
+
+All other methods from `HealthBoard` are also available.
+
 ## Bash CLI Client (`health_board.sh`)
 
 A Bash command-line client, `health_board.sh`, is also provided as an alternative for interacting with the Health Dashboard API using `curl`. It mirrors the core functionality of the Python client.
