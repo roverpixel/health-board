@@ -96,8 +96,8 @@ class TestHealthBoardAPI(unittest.TestCase):
         item_name = "new-item"
         expected_item_data = {"item_name": item_name}
 
-        # Simulate category creation failing with a 409 Conflict, then item creation succeeding
-        mock_create_category_response = self._mock_response(status_code=409, raise_for_status=requests.exceptions.HTTPError(response=self._mock_response(409)))
+        # Simulate category creation returning a 200 OK, then item creation succeeding
+        mock_create_category_response = self._mock_response(status_code=200, json_data={"note": "Category already exists"})
         mock_create_item_response = self._mock_response(status_code=201, json_data=expected_item_data)
         mock_request.side_effect = [mock_create_category_response, mock_create_item_response]
 

@@ -76,12 +76,7 @@ class HealthBoard:
             The JSON response from the API.
         """
         if upsert:
-            try:
-                self.create_category(category_name)
-            except requests.exceptions.HTTPError as e:
-                # Ignore 409 Conflict errors, which indicate the category already exists.
-                if e.response.status_code != 409:
-                    raise
+            self.create_category(category_name)
 
         endpoint = f'categories/{category_name}/items'
         response = self._request('POST', endpoint, json={"item_name": item_name})
