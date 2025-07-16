@@ -9,6 +9,7 @@ status messages, last update times, and links for more details.
 States are managed via a REST API, allowing for dynamic creation and deletion of categories and items,
 as well as updates to item statuses.
 
+![Screenshot](images/sample_board_screenshot.png)
 ## Features
 
 -   Hierarchical health status display: items grouped under categories.
