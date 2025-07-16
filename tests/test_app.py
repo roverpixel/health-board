@@ -43,8 +43,8 @@ class TestAppAPI(unittest.TestCase):
     def test_create_category_duplicate(self):
         self.client.post('/api/categories', json={'category_name': 'Cat1'})
         response = self.client.post('/api/categories', json={'category_name': 'Cat1'})
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('error', response.json)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('note', response.json)
 
     def test_create_category_missing_name(self):
         response = self.client.post('/api/categories', json={})

@@ -69,7 +69,7 @@ def create_category_api():
 
     category_name = data['category_name']
     if category_name in health_data:
-        return jsonify({"error": f"Category '{category_name}' already exists"}), 400
+        return jsonify({"note": f"Category '{category_name}' already exists"}), 200
 
     health_data[category_name] = {}
     return jsonify({category_name: health_data[category_name]}), 201
