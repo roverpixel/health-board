@@ -6,7 +6,7 @@ import os
 
 # Adjust path to import app from the parent directory
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-import app as main_app
+from app import app as main_app
 
 class TestAppAPI(unittest.TestCase):
 
@@ -17,7 +17,7 @@ class TestAppAPI(unittest.TestCase):
         main_app.health_data.clear()
 
         # Patch datetime.datetime within the 'app' module's scope
-        self.patcher_datetime = patch('app.datetime.datetime')
+        self.patcher_datetime = patch('app.app.datetime.datetime')
         self.mocked_datetime_class = self.patcher_datetime.start()
 
         # Configure the mock for the chain: datetime.datetime.utcnow().isoformat()
