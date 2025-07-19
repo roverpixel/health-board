@@ -223,14 +223,25 @@ The primary way to run the client after making it executable is `./health_board.
 
 ```
 .
-├── app.py                       # Flask application (backend API and serving frontend)
-├── templates/
-│   └── index.html               # Main HTML page for the dashboard
-├── static/
-│   ├── script.js                # Frontend JavaScript for API interaction and DOM manipulation
-│   └── style.css                # CSS for styling the dashboard
-├── setup_dashboard.sh           # Example script to initialize the dashboard structure
-├── update_status_examples.sh    # Example script to update statuses of some items
+├── app/
+│   ├── app.py                   # Flask application (backend API and serving frontend)
+│   ├── templates/
+│   │   └── index.html           # Main HTML page for the dashboard
+│   └── static/
+│       ├── script.js            # Frontend JavaScript for API interaction and DOM manipulation
+│       └── style.css            # CSS for styling the dashboard
+├── health_board.py              # Command-line client for interacting with the Health Dashboard API
+├── health_board_api.py          # Python client for programmatic interaction with the Health Dashboard API
+├── health_board.sh              # Bash command-line client for interacting with the Health Dashboard API
+├── examples/
+│   ├── setup_dashboard.sh       # Example script to initialize the dashboard with a predefined structure
+│   └── update_status_examples.sh # Example script to update the statuses of some items
+├── tests/                       # Unit and integration tests
+│   ├── test_app.py              # Unit tests for the Flask API endpoints
+│   └── test_scripts.py          # Simulation tests for the example shell scripts
+├── .gitignore                   # Specifies intentionally untracked files to ignore
+├── .flake8                      # Configuration for Flake8, a Python linting tool
+├── requirements.txt             # Lists the Python packages required by this project
 └── README.md                    # This file
 ```
 
