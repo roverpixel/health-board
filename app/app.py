@@ -31,6 +31,19 @@ def get_health_data_api():
     return jsonify(health_data)
 
 
+@app.route('/api/status-config', methods=['GET'])
+def get_status_config():
+    """API endpoint to get the status configuration."""
+    try:
+        with open('status_config.json', 'r') as f:
+            status_config = json.load(f)
+        return jsonify(status_config)
+    except FileNotFoundError:
+        return jsonify({"error": "status_config.json not found"}), 404
+    except json.JSONDecodeError:
+        return jsonify({"error": "Invalid JSON in status_config.json"}), 500
+
+
 @app.route('/api/checkpoint', methods=['POST'])
 def checkpoint_data():
     """Saves the current health_data to a file."""
@@ -136,8 +149,13 @@ def update_item_api(category_name, item_name):
 
     item = health_data[category_name][item_name]
 
-    with open('statuses.json', 'r') as f:
-        valid_statuses = json.load(f)['valid_statuses']
+    try:
+        with open('status_config.json', 'r') as f:
+            status_config = json.load(f)
+        valid_statuses = list(status_config.keys())
+    except (FileNotFoundError, json.JSONDecodeError):
+        return jsonify({"error": "Server configuration error regarding statuses"}), 500
+
     if 'status' in data:
         new_status = data['status'].lower()
         if new_status not in valid_statuses:

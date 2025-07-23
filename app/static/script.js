@@ -1,5 +1,23 @@
 document.addEventListener('DOMContentLoaded', function() {
     const healthTableBody = document.getElementById('health-table').getElementsByTagName('tbody')[0];
+    let statusConfig = {};
+
+    /**
+     * Fetches the status configuration from the API.
+     */
+    function fetchStatusConfig() {
+        return fetch('/api/status-config')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .catch(error => {
+                console.error('Error fetching status config:', error);
+                return {}; // Return empty object on error
+            });
+    }
 
     /**
      * Fetches health data from the API and triggers table update.
@@ -71,7 +89,20 @@ document.addEventListener('DOMContentLoaded', function() {
                             const statusCell = row.insertCell();
                             const statusIcon = document.createElement('span');
                             const currentStatus = item.status ? item.status.toLowerCase() : 'unknown';
-                            statusIcon.className = `status-icon status-${currentStatus}`;
+
+                            // Dynamically set class and style based on fetched config
+                            const config = statusConfig[currentStatus] || statusConfig['unknown'];
+                            let iconClass = 'status-icon';
+                            if (config) {
+                                iconClass += ` status-${config.color}`;
+                                if (config.pulse) {
+                                    iconClass += ' status-pulse';
+                                }
+                            } else {
+                                iconClass += ' status-unknown'; // Fallback
+                            }
+                            statusIcon.className = iconClass;
+
                             statusCell.appendChild(statusIcon);
                             const statusText = item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : 'Unknown';
                             statusCell.appendChild(document.createTextNode(statusText));
@@ -103,9 +134,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Initial fetch of health data when the page loads
-    fetchHealthData();
+    /**
+     * Initializes the application by fetching configuration and then starting the data polling.
+     */
+    function initialize() {
+        fetchStatusConfig().then(config => {
+            statusConfig = config;
+            fetchHealthData(); // Initial fetch
+            setInterval(fetchHealthData, 30000); // Poll every 30 seconds
+        });
+    }
 
-    // Set up polling to refresh health data every 30 seconds
-    setInterval(fetchHealthData, 30000); // 30000 milliseconds = 30 seconds
+    initialize();
 });

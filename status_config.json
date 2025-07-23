@@ -1,0 +1,26 @@
+{
+    "passing": {
+        "color": "green",
+        "pulse": false
+    },
+    "up": {
+        "color": "green",
+        "pulse": false
+    },
+    "running": {
+        "color": "green",
+        "pulse": true
+    },
+    "failing": {
+        "color": "red",
+        "pulse": false
+    },
+    "down": {
+        "color": "red",
+        "pulse": false
+    },
+    "unknown": {
+        "color": "orange",
+        "pulse": false
+    }
+}
