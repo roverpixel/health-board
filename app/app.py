@@ -136,7 +136,8 @@ def update_item_api(category_name, item_name):
 
     item = health_data[category_name][item_name]
 
-    valid_statuses = ["running", "down", "passing", "failing", "unknown", "up"]
+    with open('statuses.json', 'r') as f:
+        valid_statuses = json.load(f)['valid_statuses']
     if 'status' in data:
         new_status = data['status'].lower()
         if new_status not in valid_statuses:
