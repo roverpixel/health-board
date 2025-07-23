@@ -63,20 +63,37 @@ tr:hover {
     }
 }
 
-.status-running {
-    --pulse-shadow-start: 0 0 2px 2px rgb(0 255 56 / 32%);
-    --pulse-shadow-peak: 0 0 6px 6px rgb(33 255 82 / 80%); /* Alpha updated to 80% */
-    --pulse-shadow-end: 0 0 2px 2px rgb(0 255 56 / 24%);
-    background-color: #1aff46;
+.status-pulse {
+    --pulse-shadow-start: 0 0 2px 2px var(--status-color-alpha-32);
+    --pulse-shadow-peak: 0 0 6px 6px var(--status-color-alpha-80);
+    --pulse-shadow-end: 0 0 2px 2px var(--status-color-alpha-24);
     box-shadow: var(--pulse-shadow-start);
     animation-name: pulse-glow;
     animation-duration: 2s;
     animation-iteration-count: infinite;
     animation-timing-function: ease-in-out;
 }
-.status-passing, .status-up { background-color: #28a745; } /* Green */
-.status-down, .status-failing { background-color: #dc3545; } /* Red */
-.status-unknown { background-color: #ffc107; } /* Yellow */
+
+.status-green {
+    background-color: #28a745;
+    --status-color-alpha-32: rgb(40 167 69 / 32%);
+    --status-color-alpha-80: rgb(40 167 69 / 80%);
+    --status-color-alpha-24: rgb(40 167 69 / 24%);
+}
+
+.status-red {
+    background-color: #dc3545;
+    --status-color-alpha-32: rgb(220 53 69 / 32%);
+    --status-color-alpha-80: rgb(220 53 69 / 80%);
+    --status-color-alpha-24: rgb(220 53 69 / 24%);
+}
+
+.status-orange {
+    background-color: #ffc107;
+    --status-color-alpha-32: rgb(255 193 7 / 32%);
+    --status-color-alpha-80: rgb(255 193 7 / 80%);
+    --status-color-alpha-24: rgb(255 193 7 / 24%);
+}
 
 a {
     color: #007bff;
