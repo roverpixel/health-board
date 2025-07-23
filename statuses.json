@@ -1,0 +1,3 @@
+{
+    "valid_statuses": ["running", "down", "passing", "failing", "unknown", "up"]
+}

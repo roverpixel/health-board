@@ -131,10 +131,18 @@ def remove_item(ctx, category_name, item_name):
     click.echo(f"Item '{item_name}' from category '{category_name}' removed.")
 
 # Placeholder for update command
+def get_status_help():
+    try:
+        with open('statuses.json', 'r') as f:
+            statuses = json.load(f)['valid_statuses']
+        return f"The new status for the item (e.g., {', '.join(statuses)})."
+    except (FileNotFoundError, json.JSONDecodeError):
+        return "The new status for the item (e.g., running, down, passing, failing, unknown, up)."
+
 @board.command()
 @click.argument('category_name', envvar='HEALTH_BOARD_CATEGORY')
 @click.argument('item_name', envvar='HEALTH_BOARD_ITEM')
-@click.option('--status', help="The new status for the item (e.g., running, down, passing, failing, unknown, up).")
+@click.option('--status', help=get_status_help)
 @click.option('--message', help="A descriptive message for the item's status.")
 @click.option('--url', help="A URL related to the item for more details.")
 @click.pass_context
