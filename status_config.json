@@ -19,6 +19,10 @@
         "color": "red",
         "pulse": false
     },
+    "warning": {
+        "color": "orange",
+        "pulse": true
+    },
     "unknown": {
         "color": "orange",
         "pulse": false
