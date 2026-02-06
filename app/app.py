@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request, render_template
 from werkzeug.middleware.proxy_fix import ProxyFix
+from urllib.parse import urlparse
 import datetime
 import json
 import os
@@ -16,6 +17,17 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 #     }
 # }
 health_data = {} # Initialize fresh for each run. This is sufficient when app.py is run as a script.
+
+
+def is_safe_url(url):
+    """Checks if a URL has a safe scheme (http or https)."""
+    if not url:
+        return True
+    try:
+        parsed = urlparse(url)
+        return parsed.scheme in ('http', 'https')
+    except Exception:
+        return False
 
 
 def get_default_item_status():
@@ -170,7 +182,8 @@ def update_item_api(category_name, item_name):
         item['message'] = data['message']
 
     if 'url' in data:
-        item['url'] = data['url']
+        if is_safe_url(data['url']):
+            item['url'] = data['url']
 
     item['last_updated'] = datetime.datetime.utcnow().isoformat() + 'Z'
 
