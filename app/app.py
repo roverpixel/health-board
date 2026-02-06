@@ -1,9 +1,12 @@
 from flask import Flask, jsonify, request, render_template
+from werkzeug.middleware.proxy_fix import ProxyFix
 import datetime
 import json
 
-
 app = Flask(__name__)
+
+# x_prefix=1 tells Flask to trust the X-Forwarded-Prefix header
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 # In-memory data store
 # health_data = {

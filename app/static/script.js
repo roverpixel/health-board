@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
      * Fetches the status configuration from the API.
      */
     function fetchStatusConfig() {
-        return fetch('/api/status-config')
+        return fetch('api/status-config')
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
      * Fetches health data from the API and triggers table update.
      */
     function fetchHealthData() {
-        fetch('/api/health')
+        fetch('api/health')
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
