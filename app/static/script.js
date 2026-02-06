@@ -2,9 +2,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const healthTableBody = document.getElementById('health-table').getElementsByTagName('tbody')[0];
     const darkModeToggle = document.getElementById('dark-mode-toggle');
     let statusConfig = {};
+    let lastFetchedData = {}; // Store last fetched data to re-render on dark mode toggle
 
     // Dark Mode Logic
     const darkModeKey = 'darkMode';
+
+    // Color Configuration for Last Updated
+    const dateColors = {
+        light: {
+            fresh: [40, 167, 69],   // #28a745 (Green)
+            day1:  [184, 144, 112], // #B89070 (Greyish Orange)
+            day2:  [255, 140, 0],   // #FF8C00 (Orange)
+            day3:  [240, 128, 128], // #F08080 (Light Red)
+            day4:  [220, 53, 69]    // #DC3545 (Red)
+        },
+        dark: {
+            fresh: [144, 238, 144], // #90EE90 (Light Green)
+            day1:  [192, 160, 128], // #C0A080 (Greyish Orange)
+            day2:  [255, 165, 0],   // #FFA500 (Orange)
+            day3:  [255, 96, 96],   // #FF6060 (Light Red)
+            day4:  [255, 64, 64]    // #FF4040 (Red)
+        }
+    };
 
     function setCookie(name, value, days) {
         let expires = "";
@@ -32,6 +51,8 @@ document.addEventListener('DOMContentLoaded', function() {
         body.classList.toggle('dark-mode');
         const isDarkMode = body.classList.contains('dark-mode');
         setCookie(darkModeKey, isDarkMode, 365);
+        // Re-render table to update timestamp colors
+        updateTable(lastFetchedData);
     }
 
     // Check cookie on load
@@ -42,6 +63,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (darkModeToggle) {
         darkModeToggle.addEventListener('click', toggleDarkMode);
+    }
+
+    function interpolate(start, end, factor) {
+        const r = Math.round(start[0] + (end[0] - start[0]) * factor);
+        const g = Math.round(start[1] + (end[1] - start[1]) * factor);
+        const b = Math.round(start[2] + (end[2] - start[2]) * factor);
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    function getDateColor(hours, isDark) {
+        const palette = isDark ? dateColors.dark : dateColors.light;
+
+        if (hours < 24) return `rgb(${palette.fresh.join(',')})`;
+
+        if (hours >= 96) return `rgb(${palette.day4.join(',')})`;
+
+        // 24h to 96h interpolation
+        let start, end, factor;
+        if (hours < 48) {
+            start = palette.day1;
+            end = palette.day2;
+            factor = (hours - 24) / 24;
+        } else if (hours < 72) {
+            start = palette.day2;
+            end = palette.day3;
+            factor = (hours - 48) / 24;
+        } else { // 72 to 96
+            start = palette.day3;
+            end = palette.day4;
+            factor = (hours - 72) / 24;
+        }
+        return interpolate(start, end, factor);
     }
 
     /**
@@ -73,6 +126,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(data => {
+                lastFetchedData = data;
                 updateTable(data);
             })
             .catch(error => {
@@ -94,6 +148,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        const isDarkMode = document.body.classList.contains('dark-mode');
         let isFirstItemInCategory = true;
 
         for (const categoryName in data) {
@@ -151,7 +206,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             // Last Updated Cell
                             const lastUpdatedCell = row.insertCell();
-                            lastUpdatedCell.textContent = item.last_updated ? new Date(item.last_updated).toLocaleString() : 'N/A';
+                            if (item.last_updated) {
+                                const date = new Date(item.last_updated);
+                                lastUpdatedCell.textContent = date.toLocaleString();
+
+                                // Calculate age in hours
+                                const now = new Date();
+                                const diffMs = now - date;
+                                const diffHours = diffMs / (1000 * 60 * 60);
+
+                                // Apply color logic
+                                lastUpdatedCell.style.color = getDateColor(diffHours, isDarkMode);
+
+                                // Apply italic if older than 3 days (72 hours)
+                                if (diffHours >= 72) {
+                                    lastUpdatedCell.style.fontStyle = 'italic';
+                                }
+                            } else {
+                                lastUpdatedCell.textContent = 'N/A';
+                            }
 
                             // Message Cell
                             const messageCell = row.insertCell();
