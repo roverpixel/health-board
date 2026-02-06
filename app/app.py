@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request, render_template
 from werkzeug.middleware.proxy_fix import ProxyFix
 import datetime
 import json
+import os
 
 app = Flask(__name__)
 
@@ -177,6 +178,8 @@ def update_item_api(category_name, item_name):
 
 
 if __name__ == '__main__':
-    # Ensure Flask runs on 0.0.0.0 to be accessible externally if needed (e.g. in a container)
-    # Port 5000 is standard for Flask dev.
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Use environment variables for configuration, defaulting to secure values.
+    host = os.environ.get('FLASK_HOST', '127.0.0.1')
+    port = int(os.environ.get('FLASK_PORT', 5000))
+    debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    app.run(debug=debug, host=host, port=port)
