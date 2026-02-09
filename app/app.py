@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request, render_template
 from werkzeug.middleware.proxy_fix import ProxyFix
+from urllib.parse import urlparse
 import datetime
 import json
 import os
@@ -194,7 +195,8 @@ def update_item_api(category_name, item_name):
         item['message'] = data['message']
 
     if 'url' in data:
-        item['url'] = data['url']
+        if is_safe_url(data['url']):
+            item['url'] = data['url']
 
     item['last_updated'] = datetime.datetime.utcnow().isoformat() + 'Z'
 
