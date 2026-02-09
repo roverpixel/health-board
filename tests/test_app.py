@@ -168,6 +168,17 @@ class TestAppAPI(unittest.TestCase):
         response = self.client.put('/api/categories/Cat1/items/NonExistentItem', json={'status': 'passing'})
         self.assertEqual(response.status_code, 404)
 
+    def test_update_item_config_error(self):
+        self.client.post('/api/categories', json={'category_name': 'Cat1'})
+        self.client.post('/api/categories/Cat1/items', json={'item_name': 'Item1'})
+
+        # Mock open to raise FileNotFoundError when accessing status_config.json
+        with patch('builtins.open', side_effect=FileNotFoundError):
+            response = self.client.put('/api/categories/Cat1/items/Item1', json={'status': 'passing'})
+
+        self.assertEqual(response.status_code, 500)
+        self.assertIn('Server configuration error', response.json['error'])
+
     def test_delete_item(self):
         self.client.post('/api/categories', json={'category_name': 'Cat1'})
         self.client.post('/api/categories/Cat1/items', json={'item_name': 'Item1'})
