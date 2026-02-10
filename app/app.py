@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request, render_template
 from werkzeug.middleware.proxy_fix import ProxyFix
+from urllib.parse import urlparse
 import datetime
 import json
 import os
@@ -18,6 +19,21 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 #     }
 # }
 health_data = {} # Initialize fresh for each run. This is sufficient when app.py is run as a script.
+
+
+def validate_name(name):
+    """
+    Validates category and item names.
+    - Max length: 50 characters
+    - Allowed characters: alphanumeric, space, hyphen, underscore, period
+    """
+    if not name:
+        return False, "Name cannot be empty"
+    if len(name) > 50:
+        return False, "Name exceeds maximum length of 50 characters"
+    if not re.match(r'^[a-zA-Z0-9 _.-]+$', name):
+        return False, "Name contains invalid characters. Allowed: alphanumeric, space, hyphen, underscore, period"
+    return True, ""
 
 
 def get_default_item_status():
