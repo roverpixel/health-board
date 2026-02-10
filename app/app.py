@@ -3,6 +3,8 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 import datetime
 import json
 import os
+import re
+from urllib.parse import urlparse
 
 app = Flask(__name__)
 
@@ -21,6 +23,30 @@ health_data = {} # Initialize fresh for each run. This is sufficient when app.py
 def get_default_item_status():
     """Returns the default status dictionary for a new item."""
     return {"status": "unknown", "last_updated": None, "message": "", "url": ""}
+
+
+def is_safe_url(target):
+    """
+    Ensures that a redirect target is safe.
+    Only allows http/https protocols.
+    """
+    test_url = urlparse(target)
+    return test_url.scheme in ('http', 'https')
+
+
+def validate_name(name):
+    """
+    Validates category and item names.
+    - Max length: 50 characters
+    - Allowed characters: alphanumeric, space, hyphen, underscore, period
+    """
+    if not name:
+        return False, "Name cannot be empty"
+    if len(name) > 50:
+        return False, "Name exceeds maximum length of 50 characters"
+    if not re.match(r'^[a-zA-Z0-9 _.-]+$', name):
+        return False, "Name contains invalid characters. Allowed: alphanumeric, space, hyphen, underscore, period"
+    return True, ""
 
 
 @app.route('/')
@@ -85,6 +111,10 @@ def create_category_api():
         return jsonify({"error": "Missing category_name in request body"}), 400
 
     category_name = data['category_name']
+    is_valid, error_msg = validate_name(category_name)
+    if not is_valid:
+        return jsonify({"error": f"Invalid category_name: {error_msg}"}), 400
+
     if category_name in health_data:
         return jsonify({"note": f"Category '{category_name}' already exists"}), 200
 
@@ -113,6 +143,11 @@ def create_item_api(category_name):
         return jsonify({"error": "Missing item_name in request body"}), 400
 
     item_name = data['item_name']
+    # Also validate item name since validate_name docs say "category and item names"
+    is_valid, error_msg = validate_name(item_name)
+    if not is_valid:
+        return jsonify({"error": f"Invalid item_name: {error_msg}"}), 400
+
     if item_name in health_data[category_name]:
         existing_item_data = health_data[category_name][item_name]
         response_data = {"note": "Item already existed."}
@@ -170,7 +205,8 @@ def update_item_api(category_name, item_name):
         item['message'] = data['message']
 
     if 'url' in data:
-        item['url'] = data['url']
+        if is_safe_url(data['url']):
+            item['url'] = data['url']
 
     item['last_updated'] = datetime.datetime.utcnow().isoformat() + 'Z'
 
