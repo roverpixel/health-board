@@ -40,6 +40,17 @@ def get_default_item_status():
     return {"status": "unknown", "last_updated": None, "message": "", "url": ""}
 
 
+def is_safe_url(target):
+    """
+    Ensures that the URL is safe and valid.
+    Allows http, https, and empty strings (to clear the URL).
+    """
+    if not target:
+        return True
+    ref_url = urlparse(target)
+    return ref_url.scheme in ('http', 'https')
+
+
 @app.route('/')
 def index():
     """Serves the main HTML page."""
