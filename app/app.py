@@ -19,6 +19,9 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 # }
 health_data = {} # Initialize fresh for each run. This is sufficient when app.py is run as a script.
 
+# Pre-compile regex for performance
+NAME_PATTERN = re.compile(r'^[a-zA-Z0-9 _.-]+$')
+
 
 def validate_name(name):
     """
@@ -30,7 +33,7 @@ def validate_name(name):
         return False, "Name cannot be empty"
     if len(name) > 50:
         return False, "Name exceeds maximum length of 50 characters"
-    if not re.match(r'^[a-zA-Z0-9 _.-]+$', name):
+    if not NAME_PATTERN.match(name):
         return False, "Name contains invalid characters. Allowed: alphanumeric, space, hyphen, underscore, period"
     return True, ""
 
