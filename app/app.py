@@ -22,6 +22,13 @@ health_data = {} # Initialize fresh for each run. This is sufficient when app.py
 # Pre-compile regex for performance
 NAME_PATTERN = re.compile(r'^[a-zA-Z0-9 _.-]+$')
 
+# Load status configuration at startup
+try:
+    with open('status_config.json', 'r') as f:
+        STATUS_CONFIG = json.load(f)
+except (FileNotFoundError, json.JSONDecodeError) as e:
+    raise RuntimeError(f"Failed to load status_config.json: {e}")
+
 
 def validate_name(name):
     """
@@ -69,14 +76,7 @@ def get_health_data_api():
 @app.route('/api/status-config', methods=['GET'])
 def get_status_config():
     """API endpoint to get the status configuration."""
-    try:
-        with open('status_config.json', 'r') as f:
-            status_config = json.load(f)
-        return jsonify(status_config)
-    except FileNotFoundError:
-        return jsonify({"error": "status_config.json not found"}), 404
-    except json.JSONDecodeError:
-        return jsonify({"error": "Invalid JSON in status_config.json"}), 500
+    return jsonify(STATUS_CONFIG)
 
 
 @app.route('/api/checkpoint', methods=['POST'])
@@ -192,17 +192,10 @@ def update_item_api(category_name, item_name):
 
     item = health_data[category_name][item_name]
 
-    try:
-        with open('status_config.json', 'r') as f:
-            status_config = json.load(f)
-        valid_statuses = list(status_config.keys())
-    except (FileNotFoundError, json.JSONDecodeError):
-        return jsonify({"error": "Server configuration error regarding statuses"}), 500
-
     if 'status' in data:
         new_status = data['status'].lower()
-        if new_status not in valid_statuses:
-            return jsonify({"error": f"Invalid status. Must be one of: {', '.join(valid_statuses)}"}), 400
+        if new_status not in STATUS_CONFIG:
+            return jsonify({"error": f"Invalid status. Must be one of: {', '.join(STATUS_CONFIG.keys())}"}), 400
         item['status'] = new_status
 
     if 'message' in data:
