@@ -78,17 +78,36 @@ class TestHealthBoardAPI(unittest.TestCase):
         item_name = "test-item"
         expected_data = {"item_name": item_name}
 
-        # Mock the responses for both category creation and item creation
-        mock_create_category_response = self._mock_response(status_code=201, json_data={"category_name": category_name})
+        # In the optimized version, we try POSTing the item first.
+        # If it succeeds, only 1 call is made.
         mock_create_item_response = self._mock_response(status_code=201, json_data=expected_data)
-        mock_request.side_effect = [mock_create_category_response, mock_create_item_response]
+        mock_request.return_value = mock_create_item_response
 
         data = self.board.create_item(category_name, item_name, upsert=True)
 
         self.assertEqual(data, expected_data)
-        self.assertEqual(mock_request.call_count, 2)
+        self.assertEqual(mock_request.call_count, 1)
+        mock_request.assert_called_once_with('POST', f"{self.base_url}/categories/{category_name}/items", json={"item_name": item_name})
+
+    @patch('requests.request')
+    def test_create_item_upsert_category_not_found(self, mock_request):
+        category_name = "new-category"
+        item_name = "new-item"
+        expected_item_data = {"item_name": item_name}
+
+        # Simulate item creation failing with 404 (category not found),
+        # then category creation succeeding, then item creation succeeding.
+        mock_item_404 = self._mock_response(status_code=404, raise_for_status=requests.exceptions.HTTPError(response=self._mock_response(404)))
+        mock_create_category = self._mock_response(status_code=201, json_data={"category_name": category_name})
+        mock_create_item = self._mock_response(status_code=201, json_data=expected_item_data)
+
+        mock_request.side_effect = [mock_item_404, mock_create_category, mock_create_item]
+
+        data = self.board.create_item(category_name, item_name, upsert=True)
+
+        self.assertEqual(data, expected_item_data)
+        self.assertEqual(mock_request.call_count, 3)
         mock_request.assert_any_call('POST', f"{self.base_url}/categories", json={"category_name": category_name})
-        mock_request.assert_any_call('POST', f"{self.base_url}/categories/{category_name}/items", json={"item_name": item_name})
 
     @patch('requests.request')
     def test_create_item_upsert_category_exists(self, mock_request):
@@ -96,15 +115,14 @@ class TestHealthBoardAPI(unittest.TestCase):
         item_name = "new-item"
         expected_item_data = {"item_name": item_name}
 
-        # Simulate category creation returning a 200 OK, then item creation succeeding
-        mock_create_category_response = self._mock_response(status_code=200, json_data={"note": "Category already exists"})
+        # Optimized: try POST item first. It succeeds.
         mock_create_item_response = self._mock_response(status_code=201, json_data=expected_item_data)
-        mock_request.side_effect = [mock_create_category_response, mock_create_item_response]
+        mock_request.return_value = mock_create_item_response
 
         data = self.board.create_item(category_name, item_name, upsert=True)
 
         self.assertEqual(data, expected_item_data)
-        self.assertEqual(mock_request.call_count, 2)
+        self.assertEqual(mock_request.call_count, 1)
 
     @patch('requests.request')
     def test_create_item_no_upsert_fails(self, mock_request):
@@ -137,17 +155,36 @@ class TestHealthBoardAPI(unittest.TestCase):
         update_payload = {"status": "passing", "message": "Tests are green."}
         expected_data = {"status": "passing", "message": "Tests are green."}
 
-        # Mock responses for create_item (category and item) and the final update
-        mock_create_cat = self._mock_response(201, {"category_name": category_name})
-        mock_create_item = self._mock_response(201, {"item_name": item_name})
+        # Optimized: try PUT first. It succeeds.
         mock_update_item = self._mock_response(200, expected_data)
-        mock_request.side_effect = [mock_create_cat, mock_create_item, mock_update_item]
+        mock_request.return_value = mock_update_item
 
         data = self.board.update_item(category_name, item_name, status="passing", message="Tests are green.", upsert=True)
 
         self.assertEqual(data, expected_data)
-        self.assertEqual(mock_request.call_count, 3)
-        mock_request.assert_called_with('PUT', f"{self.base_url}/categories/{category_name}/items/{item_name}", json=update_payload)
+        self.assertEqual(mock_request.call_count, 1)
+        mock_request.assert_called_once_with('PUT', f"{self.base_url}/categories/{category_name}/items/{item_name}", json=update_payload)
+
+    @patch('requests.request')
+    def test_update_item_upsert_needed(self, mock_request):
+        category_name = "new-category"
+        item_name = "new-item"
+        update_payload = {"status": "passing"}
+        expected_data = {"status": "passing"}
+
+        # Simulate PUT failing 404, then create_item (which tries POST item, fails 404, creates cat, retries POST item), then PUT retry.
+        mock_put_404 = self._mock_response(404, raise_for_status=requests.exceptions.HTTPError(response=self._mock_response(404)))
+        mock_post_item_404 = self._mock_response(404, raise_for_status=requests.exceptions.HTTPError(response=self._mock_response(404)))
+        mock_create_cat = self._mock_response(201, {"category_name": category_name})
+        mock_create_item = self._mock_response(201, {"item_name": item_name})
+        mock_put_success = self._mock_response(200, expected_data)
+
+        mock_request.side_effect = [mock_put_404, mock_post_item_404, mock_create_cat, mock_create_item, mock_put_success]
+
+        data = self.board.update_item(category_name, item_name, status="passing", upsert=True)
+
+        self.assertEqual(data, expected_data)
+        self.assertEqual(mock_request.call_count, 5)
 
     def test_update_item_no_params(self):
         # This test is no longer valid as the method now returns a message instead of raising an error.

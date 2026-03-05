@@ -75,12 +75,17 @@ class HealthBoard:
         Returns:
             The JSON response from the API.
         """
-        if upsert:
-            self.create_category(category_name)
-
         endpoint = f'categories/{category_name}/items'
-        response = self._request('POST', endpoint, json={"item_name": item_name})
-        return response.json()
+        try:
+            response = self._request('POST', endpoint, json={"item_name": item_name})
+            return response.json()
+        except requests.exceptions.HTTPError as e:
+            # If the category doesn't exist (404), create it and retry.
+            if upsert and e.response.status_code == 404:
+                self.create_category(category_name)
+                response = self._request('POST', endpoint, json={"item_name": item_name})
+                return response.json()
+            raise
 
     def delete_item(self, category_name: str, item_name: str) -> requests.Response:
         """Deletes an item."""
@@ -102,17 +107,6 @@ class HealthBoard:
         Returns:
             The JSON response from the API.
         """
-        if upsert:
-            # This will create the category and item if they don't exist.
-            # If the item already exists, this will effectively do nothing.
-            try:
-                self.create_item(category_name, item_name, upsert=True)
-            except requests.exceptions.HTTPError as e:
-                # Ignore 409 Conflict errors, which indicate the item already exists.
-                if e.response.status_code != 409:
-                    raise
-
-        endpoint = f'categories/{category_name}/items/{item_name}'
         payload = {}
         if status is not None:
             payload['status'] = status
@@ -122,15 +116,33 @@ class HealthBoard:
             payload['url'] = url
 
         if not payload:
-            # If no update parameters are provided, we might not need to do anything.
-            # Depending on desired behavior, could return a message or the current item state.
-            # For now, we'll proceed, which will effectively do a GET if the item exists.
-            # Let's return a message for clarity.
+            # If no update parameters are provided, but upsert is True,
+            # we should still ensure the category and item exist.
+            if upsert:
+                try:
+                    self.create_item(category_name, item_name, upsert=True)
+                except requests.exceptions.HTTPError as e:
+                    # Ignore 409 Conflict errors, which indicate the item already exists.
+                    if e.response.status_code != 409:
+                        raise
             return {"message": "No update parameters provided. Item state unchanged."}
 
-
-        response = self._request('PUT', endpoint, json=payload)
-        return response.json()
+        endpoint = f'categories/{category_name}/items/{item_name}'
+        try:
+            response = self._request('PUT', endpoint, json=payload)
+            return response.json()
+        except requests.exceptions.HTTPError as e:
+            # If the item or category doesn't exist (404), create it and retry.
+            if upsert and e.response.status_code == 404:
+                try:
+                    self.create_item(category_name, item_name, upsert=True)
+                except requests.exceptions.HTTPError as ce:
+                    # Ignore 409 Conflict errors, which indicate the item already exists.
+                    if ce.response.status_code != 409:
+                        raise
+                response = self._request('PUT', endpoint, json=payload)
+                return response.json()
+            raise
 
 
 class HealthBoardUpdater(HealthBoard):
